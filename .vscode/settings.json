@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "dk_maythu.h": "c",
+        "main.h": "c",
+        "linux_hal.h": "c",
+        "unistd.h": "c"
+    }
+}

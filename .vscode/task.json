@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build FMCW App",
+            "type": "shell",
+            "command": "clear && source /opt/pkg/petalinux/sdk/environment-setup-cortexa72-cortexa53-xilinx-linux && make",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,          
+                "reveal": "always",    
+                "focus": true,         
+                "panel": "shared",     
+                "showReuseMessage": false, 
+                "clear": true          
+            },
+            "problemMatcher": {
+                "base": "$gcc",
+                "fileLocation": ["relative", "${workspaceFolder}"]
+            }
+        },
+        {
+            "label": "Clean Project",
+            "type": "shell",
+            "command": "make clean",
+            "problemMatcher": []
+        }
+    ]
+}

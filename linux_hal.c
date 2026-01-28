@@ -1,0 +1,278 @@
+#include "linux_hal.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <errno.h>
+#include <sys/mman.h>
+//static int mem_fd = -1;
+extern  int trigger_adc; // Cờ báo hiệu cần đọc ADC
+extern  int trigger_idle;
+extern  XUartLite 			Uart0;					/* Instance of the UartLite Device */
+extern  XUartLite 			Uart1;					/* Instance of the UartLite Device */
+extern  XUartLite 			Uart2;					/* Instance of the UartLite Device */
+extern  XUartLite 			Uart3;					/* Instance of the UartLite Device */
+extern  XUartLite 			Uart4;					/* Instance of the UartLite Device */
+extern  LinuxSpiDevice    	Pl_Spi0;
+extern  LinuxSpiDevice     	Pl_Spi1;
+extern  LinuxSpiDevice     	Pl_Spi2;
+extern  LinuxSpiDevice     	Pl_Spi3;
+extern  LinuxSpiDevice     	Pl_Spi4;
+// Khai báo các Instance (phải khớp với khai báo trong main.h/User_VCO_Pin.h)
+extern XGpioPs  	psgpio;
+extern XGpio        GPIO_ENDFRAME_IRQ;
+extern XGpio        GPIO_ENDFRAME_IRQ1;
+extern XGpio        GPIO_HS1;
+extern XGpio        GPIO_HS2;
+extern XGpio        GPIO_HS3;
+extern XGpio  	    GPIO_SYNC_CMAC;
+//extern int trigger_adc;
+
+ uint32_t ADDR_CMAC_REG; //     0xA0270000
+ uint32_t ADDR_DMA_CMAC;//      0xA0280000
+ uint32_t ADDR_DMA_ADC;//       0xA0240000
+ uint32_t ADDR_DMA_FFT; //      0xA01C0000
+
+// Các vùng RAM Reserved (Vật lý)
+ uint32_t PHYS_ADC_BUF; //      0x40000000
+ uint32_t PHYS_FFT_DESC;//      0x50000000 // Đặt Descriptor tại đầu vùng FFT RAM
+ uint32_t PHYS_FFT_BUF; //      0x50001000
+ uint32_t PHYS_CMAC_BUF;//      0x60000000
+
+
+// =============================================================================
+// PHẦN 1: hal_init
+// =============================================================================
+#define BRAM_BASE_PHYS_ADDR    0xA0000000
+#define BRAM_TOTAL_MAP_SIZE    0x00400000 // Map 3MB để bao phủ hết dải 0xA0000000 -> 0xA02A0000
+
+static int mem_fd = -1;
+//static void* global_bram_map_base = NULL;
+// Con trỏ toàn cục để lưu địa chỉ ảo đã được map
+//void* pl_virt_base = NULL;
+// =============================================================================
+// PHẦN 1: ĐỊNH NGHĨA VÀ ÁNH XẠ THỰC TẾ
+// =============================================================================
+static volatile void *mem_map_base = NULL;
+// Định nghĩa lại danh sách vùng nhớ
+BRAM_Region bram_list[] = {
+    // --- CÁC KHỐI BRAM TRÊN PL (0xA0xxxxxx) ---
+    [IDX_PULSE16]   = {"Pulse16",      0xA0180000, 24000, NULL},
+    [IDX_CODE162]   = {"Code162",      0xA01A0000, 48000, NULL},
+    [IDX_CODE163]   = {"Code163",      0xA0190000, 24000, NULL},
+    [IDX_PULSE]     = {"Pulse",        0xA0220000, 48000, NULL},
+    [IDX_CODE]      = {"Code",         0xA0160000, 16384, NULL},
+    [IDX_PHASE_I1]  = {"Phase_I1",     0xA01D0000, 48000, NULL},
+    [IDX_PHASE_Q1]  = {"Phase_Q1",     0xA01E0000, 48000, NULL},
+    [IDX_PHASE_I2]  = {"Phase_I2",     0xA01F0000, 48000, NULL},
+    [IDX_PHASE_Q2]  = {"Phase_Q2",     0xA0200000, 48000, NULL},
+    [IDX_CS_FB17]   = {"CS_fb17",      0xA0233000, 4096,  NULL},
+    [IDX_FB17]      = {"fb17",         0xA0170000, 42720, NULL},
+    [IDX_FB1_16]    = {"fb1_16",       0xA0210000, 48000, NULL},
+    [IDX_B17S]      = {"b17S",         0xA01B0000, 48000, NULL},
+    [IDX_FB17I]     = {"fb17i",        0xA0136000, 4096,  NULL},
+    [IDX_FB17Q]     = {"fb17q",        0xA0137000, 4096,  NULL},
+
+    // --- THANH GHI ĐIỀU KHIỂN (REGISTERS) ---
+    [IDX_DMA_ADC]   = {"REG_DMA_ADC",  0xA0240000, 65536, NULL},
+    [IDX_DMA_CMAC]  = {"REG_DMA_CMAC", 0xA0280000, 65536, NULL},
+    [IDX_DMA_FFT]   = {"REG_DMA_FFT",  0xA01C0000, 65536, NULL},
+    [IDX_CMAC_REG]  = {"REG_CMAC",     0xA0270000, 65536, NULL},
+
+    // --- VÙNG RAM CHO ADC (256MB) ---
+    [IDX_ADC_BUF]   = {"BUF_ADC_RAM",  0x40000000, 0x10000000, NULL}, 
+
+    // --- VÙNG RAM CHO FFT (256MB) ---
+    [IDX_DMA_FFT_DESC] = {"FFT_DESC",  0x50000000, 4096,       NULL}, // Descriptor
+    [IDX_FFT_BUF]      = {"BUF_FFT_RAM", 0x50001000, 0x0FFF0000, NULL}, // Data (phần còn lại)
+
+    // --- VÙNG RAM CHO CMAC (Chia đôi 256MB thành TX và RX) ---
+    [IDX_CMAC_TX_BUF]  = {"BUF_CMAC_TX", 0x60000000, 0x08000000, NULL}, // 128MB đầu cho TX
+    [IDX_CMAC_RX_BUF]  = {"BUF_CMAC_RX", 0x68000000, 0x08000000, NULL}, // 128MB sau cho RX
+};
+
+int hal_init() 
+{
+    BRAM_Manager_Init();
+
+    // Địa chỉ Base vật lý từ Vivado
+    ADDR_CMAC_REG  =    BRAM_Get_Phys_Addr(IDX_CMAC_REG);
+    ADDR_DMA_CMAC  =    BRAM_Get_Phys_Addr(IDX_DMA_CMAC);
+    ADDR_DMA_ADC   =    BRAM_Get_Phys_Addr(IDX_DMA_ADC);
+    ADDR_DMA_FFT   =    BRAM_Get_Phys_Addr(IDX_DMA_FFT);
+
+    // Các vùng RAM Reserved (Vật lý)
+    PHYS_ADC_BUF   =    BRAM_Get_Phys_Addr(IDX_ADC_BUF);
+    PHYS_FFT_DESC  =    BRAM_Get_Phys_Addr(IDX_DMA_FFT_DESC); // Đặt Descriptor tại đầu vùng FFT RAM
+    PHYS_FFT_BUF   =    BRAM_Get_Phys_Addr(IDX_FFT_BUF);
+    PHYS_CMAC_BUF  =    BRAM_Get_Phys_Addr(IDX_CMAC_TX_BUF);
+
+    xil_printf("ADDR_CMAC_REG: 0x%X \n", ADDR_CMAC_REG);
+    xil_printf("ADDR_DMA_CMAC: 0x%X \n", ADDR_DMA_CMAC);
+    xil_printf("ADDR_DMA_ADC: 0x%X \n", ADDR_DMA_ADC);
+    xil_printf("ADDR_DMA_FFT: 0x%X \n", ADDR_DMA_FFT);
+    xil_printf("PHYS_ADC_BUF: 0x%X \n", PHYS_ADC_BUF);
+    xil_printf("PHYS_FFT_DESC: 0x%X \n", PHYS_FFT_DESC);
+    xil_printf("PHYS_FFT_BUF: 0x%X \n", PHYS_FFT_BUF);
+    xil_printf("PHYS_CMAC_BUF: 0x%X \n", PHYS_CMAC_BUF);
+
+    xil_printf("[HAL] Successfully mapped physical address 0x%X -> virtual memory.\n", MAP_BASE_ADDR);
+    return 0;
+}
+
+void hal_cleanup() {
+    xil_printf("[HAL] Cleaning up memory map...\n");
+    BRAM_Manager_Close();
+    // ... phần cleanup cho GPIO sysfs (nếu có) ...
+    // Đừng quên gọi hàm dọn dẹp trước khi thoát
+    XGpio_CleanupAll();
+}
+
+int BRAM_Manager_Init() 
+{
+    // 1. Mở cho BRAM (Dùng O_SYNC để an toàn, vì BRAM nhỏ không cần cache)
+    int fd_sync = open("/dev/mem", O_RDWR | O_SYNC);
+
+    // 2. Mở cho DDR RAM (KHÔNG dùng O_SYNC để bật Cache, giúp đạt tốc độ 2GB/s)
+    int fd_cache = open("/dev/mem", O_RDWR); 
+
+    // mở cho GPIO, RFDC
+    int mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+
+    if (fd_sync < 0 || fd_cache < 0) return -1;
+
+    // Map dải 0xA0000000 (BRAM/Regs) dùng fd_sync
+    mem_map_base = mmap(NULL, MAP_SIZE, 
+                                PROT_READ | PROT_WRITE, MAP_SHARED, 
+                                fd_sync, MAP_BASE_ADDR);
+
+    for (int i = 0; i < HAL_TOTAL_COUNT; i++) {
+        if (bram_list[i].phys_addr == 0) continue;
+
+        if (bram_list[i].phys_addr >= 0xA0000000) {
+            // Các vùng BRAM dùng fd_sync (Non-cached)
+            uint32_t offset = bram_list[i].phys_addr - MAP_BASE_ADDR;
+            bram_list[i].virt_addr = (uint8_t*)mem_map_base + offset;
+        } 
+        else {
+            // Thêm điều kiện này vào BRAM_Manager_Init để map non-cached cho Descriptor
+            if (bram_list[i].phys_addr == 0x50000000) // Địa chỉ descriptor
+            {
+                // Map riêng Descriptor NON-CACHED
+                bram_list[i].virt_addr = mmap(NULL, bram_list[i].size, 
+                                            PROT_READ | PROT_WRITE, MAP_SHARED, 
+                                            fd_sync, bram_list[i].phys_addr);
+            }
+            else if (bram_list[i].phys_addr >= 0x40000000 && bram_list[i].phys_addr < 0x70000000) 
+            {
+                // Map Data Buffer CACHEABLE (tất cả các buffer còn lại)
+                bram_list[i].virt_addr = mmap(NULL, bram_list[i].size, 
+                                            PROT_READ | PROT_WRITE, MAP_SHARED, 
+                                            fd_cache, bram_list[i].phys_addr);
+            }
+        }
+    }
+    return 0;
+}
+
+// Sửa lại hàm này: nhận vào Index của vùng muốn đọc
+int BRAM_Read_To_Buffer(void* dest_buffer, int region_index, size_t size) 
+{
+    void* src_virt_addr = BRAM_Get_Virt_Addr(region_index);
+    
+    if (src_virt_addr == NULL) {
+        printf("Loi: Index %d chua duoc map!\n", region_index);
+        return -1;
+    }
+
+    // Bảo vệ chống tràn vùng nhớ
+    size_t max_size = BRAM_Get_Size(region_index);
+    if (size > max_size) size = max_size;
+
+    memcpy(dest_buffer, src_virt_addr, size);
+    return 0;
+}
+
+// Giữ lại tên cũ nếu bạn đang dùng ở các file khác, nhưng sửa logic
+int Linux_memcpy(void* dest_buffer, uint32_t region_index, size_t size) 
+{
+    return BRAM_Read_To_Buffer(dest_buffer, (int)region_index, size);
+}
+
+void BRAM_Manager_Close() {
+     // 1. Unmap các vùng DDR/Descriptors đã được mmap riêng lẻ
+    for (int i = 0; i < HAL_TOTAL_COUNT; i++) {
+        // Chỉ unmap các vùng không thuộc dải 0xA0xxxxxx
+        if (bram_list[i].virt_addr != NULL && bram_list[i].phys_addr < BRAM_BASE_PHYS_ADDR) {
+            // Lấy size chính xác từ danh sách BRAM_Region
+            munmap(bram_list[i].virt_addr, bram_list[i].size); 
+            bram_list[i].virt_addr = NULL;
+        }
+    }
+
+    // 2. Unmap vùng 0xA0xxxxxx (BRAM/Regs)
+    if (mem_map_base && mem_map_base != MAP_FAILED) {
+        munmap((void*)mem_map_base, BRAM_TOTAL_MAP_SIZE);
+        mem_map_base = NULL;
+    }
+    
+    // 3. Đóng tất cả File Descriptors (Nếu bạn đã refactor chúng thành toàn cục)
+    // Hiện tại: Bạn chỉ đóng mem_fd (FD thứ 3 được mở)
+    if (mem_fd >= 0) {
+        close(mem_fd);
+        mem_fd = -1;
+    }
+}
+
+void* BRAM_Get_Virt_Addr(int index) {
+    if (index < 0 || index >= HAL_TOTAL_COUNT) return NULL;
+    return bram_list[index].virt_addr;
+}
+
+uint32_t BRAM_Get_Phys_Addr(int index) {
+    if (index < 0 || index >= HAL_TOTAL_COUNT) return NULL;
+    return bram_list[index].phys_addr;
+}
+
+size_t BRAM_Get_Size(int index) {
+    if (index < 0 || index >= HAL_TOTAL_COUNT) return 0;
+    return bram_list[index].size;
+}
+
+void Xil_Out32(u32 PhysAddr, u32 Value) 
+{
+    if (!mem_map_base) return;
+    
+    // Kiểm tra xem địa chỉ có nằm trong vùng đã map không (tùy chọn nhưng an toàn)
+    if (PhysAddr < MAP_BASE_ADDR || PhysAddr >= (MAP_BASE_ADDR + MAP_SIZE)) {
+        xil_printf("[HAL ERROR] Xil_Out32: Address 0x%X is out of mapped range!\n", PhysAddr);
+        return;
+    }
+
+    // Tính toán offset so với địa chỉ base đã map và cộng vào con trỏ ảo
+    *(volatile u32 *)(mem_map_base + (PhysAddr - MAP_BASE_ADDR)) = Value;
+}
+
+u32 Xil_In32(u32 PhysAddr) {
+    if (!mem_map_base) return 0;
+
+    // Kiểm tra xem địa chỉ có nằm trong vùng đã map không (tùy chọn nhưng an toàn)
+    if (PhysAddr < MAP_BASE_ADDR || PhysAddr >= (MAP_BASE_ADDR + MAP_SIZE)) {
+        xil_printf("[HAL ERROR] Xil_In32: Address 0x%X is out of mapped range!\n", PhysAddr);
+        return 0;
+    }
+
+    // Tính toán offset so với địa chỉ base đã map và cộng vào con trỏ ảo
+    return *(volatile u32 *)(mem_map_base + (PhysAddr - MAP_BASE_ADDR));
+}
+
+void xil_printf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    fflush(stdout);
+}
