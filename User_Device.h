@@ -15,6 +15,7 @@ extern struct AIS_Struct			AIS_Data;
 extern struct UDP_Struct  			UDP_Frame;
 extern struct CAN_Control_def 		CAN_Controls;
 extern struct UDP_Phase  			UDP_Phase1;
+extern struct CMAC_Struct  			CMAC_Struct1;
 
 extern int cmdExitVal;
 /******************** Constant Definitions **********************************/

@@ -10,15 +10,18 @@
 #include "xstatus.h"
 #include "SPI_Hal.h"        // thư viện SPI
 #include "xgpio_hal.h"      // thư viện XGPIO
-#include "XGpioPS_hal.h"    // thư viện GPIO
+#include "XGpioPS_Hal.h"    // thư viện GPIO
 #include "XUart_Hal.h"      // thư viện Uart
 #include "XUartPS_Hal.h"    // thư viện XUartPS
 #include "DMA_Hal.h"        // thư viện DMA
 #include "DMA_Data.h"        // thư viện DMA
 #include "CMAC_Hal.h"       // thư viện CMA
 #include "SI570_Hal.h"
-#include "HAL_cache.h"
-//#include "vnx_c_wrapper.h"
+#include "Hal_cache.h"
+#include "SFP28_Hal.h"
+#include <time.h>
+#include <sys/time.h>
+//#include "User_Device.h"
 #include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
 #include <linux/i2c-dev.h>
@@ -58,6 +61,21 @@ extern uint32_t PHYS_ADC_BUF;  //     0x40000000
 extern uint32_t PHYS_FFT_DESC;  //    0x50000000 // Đặt Descriptor tại đầu vùng FFT RAM
 extern uint32_t PHYS_FFT_BUF;  //     0x50001000
 extern uint32_t PHYS_CMAC_BUF; //     0x60000000
+
+extern struct Radar_Struct 			Radar;
+extern struct Radar_Debug_Struct 	Radar_Debug;
+extern struct Frame_Struct 			Frame;
+extern struct PC8_def				PC8;
+extern struct PC8_def				PC8s;
+extern struct AFC_Struct 			AFC1;
+extern struct AIS_Struct			AIS_Data;
+extern struct Erob_Struct  			Erob_Motor;
+extern struct Erob_Control_def 		Erob_Control;
+extern struct AIS_Struct			AIS_Data;
+extern struct UDP_Struct  			UDP_Frame;
+extern struct CAN_Control_def 		CAN_Controls;
+extern struct UDP_Phase  			UDP_Phase1;
+extern struct CMAC_Struct  			CMAC_Struct1;
 
 // Định nghĩa lại UINTPTR cho môi trường Linux
 #ifndef UINTPTR

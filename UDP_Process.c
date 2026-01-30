@@ -57,7 +57,18 @@ void* udp_control_thread(void *arg) {
 			if(cmd_update >= 5)
 			{
 				cmd_update = 0;
-			printf("u\r\n");
+			//printf("u\r\n");
+			//     if(Radar.Screen_Modei != Radar.Screen_Mode)
+        //     {
+        //         xil_printf("Screen_Mode = %d\r\n", Radar.Screen_Mode);
+        //         Radar.Screen_Modei = Radar.Screen_Mode;
+        //     }
+
+        //     if(PC8.Gia_Quay_ENi != PC8.Gia_Quay_EN)
+        //     {
+        //         xil_printf("Gia_Quay = %d\r\n", PC8.Gia_Quay_EN);
+        //         PC8.Gia_Quay_ENi = PC8.Gia_Quay_EN;
+        //     }
 			}
 		}
 		else if(Radar.Receiver_Excel==1) // goi tin tu PC8

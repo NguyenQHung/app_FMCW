@@ -619,3 +619,76 @@ struct AFC_Struct
 	unsigned char 		Fix_time2;
 	unsigned char 		Fix_DIR;
 	};
+
+	/**
+ * @brief Cấu trúc quản lý trạng thái, cấu hình và thống kê của Core CMAC 100G.
+ *
+ * Mục đích là gói gọn tất cả các thanh ghi/trạng thái quan trọng để dễ dàng
+ * truy cập và chẩn đoán trong thời gian thực.
+ */
+struct CMAC_Struct{
+    // ==========================================================
+    // 1. THÔNG TIN CẤU HÌNH CƠ BẢN
+    // ==========================================================
+    uint32_t base_address;          ///< Địa chỉ cơ sở của CMAC IP Core (ADDR_CMAC_REG)
+    uint16_t core_version_major;    ///< Phiên bản phần cứng (Từ 0x0008)
+    uint16_t core_version_minor;
+
+    // ==========================================================
+    // 2. CẤU HÌNH HIỆN TẠI (Được ghi vào thanh ghi)
+    // ==========================================================
+    uint32_t gt_reset_reg;          ///< Thanh ghi 0x0000 (GT Reset)
+    uint32_t tx_config_reg;         ///< Thanh ghi 0x000C (ctl_tx_enable, ctl_tx_send_idle)
+    uint32_t rx_config_reg;         ///< Thanh ghi 0x0014 (ctl_rx_enable, check_preamble/sfd)
+    uint32_t loopback_mode;         ///< Thanh ghi 0x0090 (0: External, 1: Internal Loopback)
+    uint32_t rsfec_config_reg;      ///< Thanh ghi 0x1000 (FEC Enable/Config)
+    
+    // ==========================================================
+    // 3. TRẠNG THÁI HIỆN TẠI (Đọc từ thanh ghi)
+    // ==========================================================
+    uint32_t rx_main_status;        ///< Thanh ghi 0x0204 (Quan trọng nhất: Aligned, Faults)
+    uint32_t tx_main_status;        ///< Thanh ghi 0x0200 (TX Fault/PLL Lock)
+    uint32_t rsfec_status;          ///< Thanh ghi 0x1004 (FEC Lock)
+    uint32_t pcs_block_lock;        ///< Thanh ghi 0x020C (Tình trạng khóa block của 20 lane)
+    uint32_t pcs_lane_sync;         ///< Thanh ghi 0x0210 (Tình trạng đồng bộ lane)
+
+    // ==========================================================
+    // 4. TRẠNG THÁI CHẨN ĐOÁN (Phân tích từ thanh ghi)
+    // ==========================================================
+    unsigned char link_is_up;       ///< (rx_main_status & 0x3) == 0x3
+    unsigned char pll_is_locked;    ///< !(tx_main_status & 0x01)
+    unsigned char fec_is_locked;    ///< (rsfec_status & 0x4000)
+    
+    unsigned char remote_fault;     ///< Lỗi do đối tác báo (0x0204 Bit 5)
+    unsigned char high_ber_flag;    ///< Tín hiệu xấu (0x0204 Bit 4)
+    
+    uint8_t pattern_mismatch_count; ///< Số lỗi bit Pattern (0x0204 Bits 11:9)
+    unsigned char bad_preamble;     ///< Lỗi Preamble (0x0204 Bit 12)
+    unsigned char bad_sfd;          ///< Lỗi SFD (0x0204 Bit 13)
+
+    // ==========================================================
+    // 5. THỐNG KÊ (Đọc sau khi TICK: 0x02B0/0x02B4)
+    // ==========================================================
+    uint32_t total_packets_rx;      ///< Thanh ghi 0x0608 (Tổng số gói nhận được)
+    uint32_t fec_corrected_blocks;  ///< Thanh ghi 0x1008
+    uint32_t fec_uncorrected_blocks;///< Thanh ghi 0x100C
+
+    // ==========================================================
+    // 6. DỮ LIỆU LỊCH SỬ VÀ ĐIỀU KHIỂN THỜI GIAN THỰC (Tham khảo AFC_Struct)
+    // ==========================================================
+    uint32_t rx_status_history[10]; ///< Lưu trữ 10 trạng thái 0x0204 gần nhất
+    uint8_t history_index;          ///< Index hiện tại cho mảng history
+    
+    unsigned char trigger_diag;     ///< Tương đương với 'trigger_idle', yêu cầu chẩn đoán
+    unsigned char is_fully_initialized; ///< Flag báo đã hoàn tất quá trình smart_init_cmac
+    uint16_t init_timeout_counter;  ///< Bộ đếm cho các bước chờ (PLL Lock, Alignment)
+
+    uint8_t stat_tx_local_fault;        ///
+    uint8_t stat_rx_aligned;          	///
+    uint8_t usr_rx_reset;          		///
+    uint8_t usr_tx_reset;          		///
+    uint8_t interal_rx_local_fault;     ///
+    uint8_t stat_rx_local_fault;     	///
+    uint8_t stat_rx_miss_aligned;       ///
+    uint8_t usr_tx_bad_fcs;          	///
+};

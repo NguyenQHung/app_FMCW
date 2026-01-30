@@ -94,7 +94,7 @@ void* ADC_Worker_Thread(void* arg) {
 /**
  * @brief Thread chính để giám sát và nhận dữ liệu FFT từ AXI DMA
  */
-void* FFT_Monitor_Thread(void* arg) {
+void* FFT_Monitor_SG_S2MM_Thread(void* arg) {
     long long fft_count = 0;
 
     // --- BƯỚC 1: LẤY CÁC CON TRỎ ĐỊA CHỈ ẢO TỪ HAL ---
@@ -133,7 +133,7 @@ void* FFT_Monitor_Thread(void* arg) {
     // Gói tin thực tế: 16384 mẫu * 16 kênh * 32 bit = 1,048,576 bytes
     const uint32_t ACTUAL_PACKET_SIZE = 1048576; 
     // Buffer thử nghiệm: Lớn hơn gói tin để đảm bảo DMA dừng bằng TLAST
-    const uint32_t EXPERIMENTAL_BUFFER_SIZE = ACTUAL_PACKET_SIZE; 
+    const uint32_t EXPERIMENTAL_BUFFER_SIZE = ACTUAL_PACKET_SIZE + 256; 
 
     printf("[FFT] Config: Packet Size=%u, Buffer Size=%u\n", ACTUAL_PACKET_SIZE, EXPERIMENTAL_BUFFER_SIZE);
 
@@ -157,26 +157,84 @@ void* FFT_Monitor_Thread(void* arg) {
     desc_virt[1].control         = EXPERIMENTAL_BUFFER_SIZE;
     desc_virt[1].status          = 0;
 
+    // =================================================================
+    // PHẦN BỔ SUNG: IN THÔNG TIN CẤU HÌNH DESCRIPTOR TỪ VIRTUAL ADDRESS
+    // =================================================================
+    
+    printf("\n[FFT DEBUG] Descriptor 0 (Virt: %p, Phys: 0x%llX) Cấu hình:\n", 
+           (void*)&desc_virt[0], (long long)desc0_phys);
+    printf("  - Buffer Phys: 0x%08X (MSB: 0x%X)\n", 
+           desc_virt[0].buffer_addr, desc_virt[0].buffer_addr_msb);
+    printf("  - Next Desc Phys: 0x%08X (MSB: 0x%X) -> Expected 0x%llX\n", 
+           desc_virt[0].nxtdesc, desc_virt[0].nxtdesc_msb, (long long)desc1_phys);
+    printf("  - Control (Size): %u\n", desc_virt[0].control);
+    printf("  - Status: 0x%X\n", desc_virt[0].status);
+    
+    printf("\n[FFT DEBUG] Descriptor 1 (Virt: %p, Phys: 0x%llX) Cấu hình:\n", 
+           (void*)&desc_virt[1], (long long)desc1_phys);
+    printf("  - Buffer Phys: 0x%08X (MSB: 0x%X) -> Expected 0x%llX\n", 
+           desc_virt[1].buffer_addr, desc_virt[1].buffer_addr_msb, (long long)buffer1_phys);
+    printf("  - Next Desc Phys: 0x%08X (MSB: 0x%X) -> Expected 0x%llX (Desc 0)\n", 
+           desc_virt[1].nxtdesc, desc_virt[1].nxtdesc_msb, (long long)desc0_phys);
+    printf("  - Control (Size): %u\n", desc_virt[1].control);
+    printf("  - Status: 0x%X\n", desc_virt[1].status);
+
+
+    // // =================================================================
+    // // ==> BƯỚC BẮT BUỘC: FLUSH CACHE CHO DESCRIPTOR <==
+    // // Đảm bảo Descriptor được đẩy từ cache của CPU ra RAM cho DMA đọc
+    // cache_flush_range((void*)desc_virt, 2 * sizeof(DMA_Descriptor));
+    // // =================================================================    
+
+
     // --- BƯỚC 3: KHỞI ĐỘNG PHẦN CỨNG DMA (S2MM) ---
     // Định nghĩa offset thanh ghi (tính theo word 32-bit)
     const int S2MM_DMACR_OFF    = 0x30 / 4;
     const int S2MM_DMASR_OFF    = 0x34 / 4;
     const int S2MM_CURDESC_OFF  = 0x38 / 4;
     const int S2MM_TAILDESC_OFF = 0x40 / 4;
+    // Thêm 4 dòng này vào BƯỚC 3
+    const int S2MM_CURDESC_MSB_OFF = 0x3C / 4;
+    const int S2MM_TAILDESC_MSB_OFF = 0x44 / 4;
 
     // 3.1 Reset
+    printf("[FFT] Resetting DMA channel...\n");
     dma_fft_regs[S2MM_DMACR_OFF] = 0x4; 
     while (dma_fft_regs[S2MM_DMACR_OFF] & 0x4); 
+    printf("[FFT] DMA Reset complete.\n");
 
-    // 3.2 Bật DMA (Run=1)
-    // Lưu ý: Không bật ngắt (IOC_IrqEn, Err_IrqEn) vì ta dùng Polling
-    dma_fft_regs[S2MM_DMACR_OFF] = 0x0001; 
-
+    printf("[FFT] Setting initial descriptors...\n");
     // 3.3 Nạp Descriptor đầu tiên
+    dma_fft_regs[S2MM_CURDESC_MSB_OFF] = 0; // Zero MSB
     dma_fft_regs[S2MM_CURDESC_OFF] = (uint32_t)desc0_phys;
 
     // 3.4 KÍCH HOẠT: Nạp Descriptor cuối cùng vào Tail
-    dma_fft_regs[S2MM_TAILDESC_OFF] = (uint32_t)desc1_phys;
+    dma_fft_regs[S2MM_TAILDESC_MSB_OFF] = 0; // Zero MSB
+    dma_fft_regs[S2MM_TAILDESC_OFF] = (uint32_t)desc1_phys;    
+
+    printf("[FFT] Starting DMA Engine...\n");
+    // 3.2 Bật DMA (Run=1)
+    // Lưu ý: Không bật ngắt (IOC_IrqEn, Err_IrqEn) vì ta dùng Polling
+    dma_fft_regs[S2MM_DMACR_OFF] = 0x3001; 
+    
+
+
+    // =================================================================
+    // PHẦN BỔ SUNG: ĐỌC LẠI THANH GHI DMA SAU KHI GHI LỆNH CẤU HÌNH
+    // =================================================================
+    uint32_t readback_curdesc = dma_fft_regs[S2MM_CURDESC_OFF];
+    uint32_t readback_taildesc = dma_fft_regs[S2MM_TAILDESC_OFF];
+    uint32_t readback_dmasr = dma_fft_regs[S2MM_DMASR_OFF];
+
+    printf("\n[FFT DEBUG READBACK] Sau khi Ghi Lệnh Cấu hình:\n");
+    printf("  - DMACR: 0x%X (Readback)\n", dma_fft_regs[S2MM_DMACR_OFF]);
+    printf("  - DMASR: 0x%08X\n", readback_dmasr);
+    printf("  - CURDESC: 0x%08X (Exp: 0x%08X)\n", readback_curdesc, (uint32_t)desc0_phys);
+    printf("  - TAILDESC: 0x%08X (Exp: 0x%08X)\n", readback_taildesc, (uint32_t)desc1_phys);
+    printf("  - Status Idle/Halted: Idle=%d, Halted=%d, ErrIrq=%d\n", 
+           (readback_dmasr & 0x2) >> 1, (readback_dmasr & 0x1), (readback_dmasr & 0x2000) >> 13);
+    
+    // =================================================================    
 
     printf("[FFT] Ping-Pong SG Mode Started. Polling loop active...\n");
 
@@ -255,6 +313,99 @@ void* FFT_Monitor_Thread(void* arg) {
             // Ngủ ngắn để giảm tải CPU
             usleep(100); 
         }
+    }
+    return NULL;
+}
+
+int DMA_FFT_Read_Once(uint64_t phys_addr, uint32_t length) {
+    // Offset của thanh ghi S2MM (Stream to Memory-Mapped)
+    const uint32_t DMACR_OFF    = 0x30; // Control Register
+    const uint32_t DMASR_OFF    = 0x34; // Status Register
+    const uint32_t DEST_ADDR_OFF= 0x48; // Destination Address Register
+    const uint32_t LENGTH_OFF   = 0x58; // Length Register
+
+    // 1. Reset DMA
+    Xil_Out32(ADDR_DMA_FFT + DMACR_OFF, 0x4); 
+    while (Xil_In32(ADDR_DMA_FFT + DMACR_OFF) & 0x4);
+
+    // 2. Clear các bit Interrupt cũ (W1C - Write 1 to Clear)
+    Xil_Out32(ADDR_DMA_FFT + DMASR_OFF, 0x0000F000); 
+
+    // 3. Khởi chạy DMA
+    // Chế độ Direct Register: Cấu hình địa chỉ đích (Destination Address)
+    Xil_Out32(ADDR_DMA_FFT + DEST_ADDR_OFF, (uint32_t)phys_addr);
+    Xil_Out32(ADDR_DMA_FFT + DEST_ADDR_OFF + 0x4, (uint32_t)(phys_addr >> 32)); // MSB
+    
+    // Kích hoạt DMA (Run = 1)
+    Xil_Out32(ADDR_DMA_FFT + DMACR_OFF, 0x1); 
+    
+    // Nạp độ dài để KÍCH HOẠT DMA
+    Xil_Out32(ADDR_DMA_FFT + LENGTH_OFF, length); 
+
+    // 4. Polling chờ Xong (0x1000 = IOC)
+    int timeout = 10000; // 10000 * 10us = 100ms
+    while (1) {
+        uint32_t sr = Xil_In32(ADDR_DMA_FFT + DMASR_OFF);
+        
+        // Kiểm tra bit 12 (0x1000 = IOC) - Hoàn thành giao dịch
+        if (sr & 0x1000) { 
+            // Xóa bit IOC ngay sau khi nhận xong (W1C)
+            Xil_Out32(ADDR_DMA_FFT + DMASR_OFF, 0x00001000); 
+            break; 
+        }
+
+        // Kiểm tra các bit lỗi (DMA Int Err, DMA Slave Err, DMA Decode Err)
+        if (sr & 0x70) { 
+            printf("[FFT] DMA Direct Error! SR: 0x%08X\n", sr);
+            return -2;
+        }
+
+        usleep(10);
+        if (--timeout == 0) {
+            uint32_t actual_bytes = Xil_In32(ADDR_DMA_FFT + LENGTH_OFF);
+            printf("[FFT] Timeout! SR: 0x%X, Recv: %u/%u\n", sr, actual_bytes, length);
+            return -3;
+        }
+    }
+    return 0;
+}
+
+void* FFT_Worker_Thread(void* arg) {
+    static int fft_count = 0;
+    // Lấy con trỏ ảo để kiểm tra dữ liệu
+    uint32_t *data_ptr = (uint32_t*)BRAM_Get_Virt_Addr(IDX_FFT_BUF);
+
+    printf("[FFT] Worker Thread started for 1MB packets (Direct Mode).\n");
+
+    while(1) {
+        // Đợi tín hiệu trigger từ bên ngoài (ví dụ: một GPIO)
+        if (trigger_FFT == 1) {
+            
+            // Lấy địa chỉ vật lý của Buffer
+            uint64_t phys_buf_addr = BRAM_Get_Phys_Addr(IDX_FFT_BUF);
+            
+            if (DMA_FFT_Read_Once(phys_buf_addr, FFT_PACKET_SIZE) == 0) {
+                
+                // Xử lý Cache (Rất quan trọng vì Data Buffer được map Cached)
+                void* current_buffer_virt = (void*)data_ptr;
+                cache_invalidate_range(current_buffer_virt, FFT_PACKET_SIZE);
+
+                // In debug để xem dữ liệu có hợp lệ hay không
+                printf("[FFT] SUCCESS! Frame %d. Data[0..3]: 0x%08X 0x%08X 0x%08X 0x%08X\n", 
+                       fft_count, data_ptr[0], data_ptr[1], data_ptr[2], data_ptr[3]);
+                
+                fft_count++;
+                
+                // Tắt trigger
+                pthread_mutex_lock(&radar_data_mutex);
+                trigger_FFT = 0; 
+                pthread_mutex_unlock(&radar_data_mutex);
+            } else {
+                uint32_t bytes_rec = Xil_In32(ADDR_DMA_FFT + 0x58);
+                printf("[FFT] Error! Bytes received before TLAST: %u\n", bytes_rec);
+            }
+        }
+        usleep(10); // Nghỉ ngắn chờ trigger
     }
     return NULL;
 }

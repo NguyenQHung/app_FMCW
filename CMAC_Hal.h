@@ -61,6 +61,9 @@
 #define STAT_FEC_CORRECTED_LSB      0x1008
 #define STAT_FEC_UNCORRECTED_LSB    0x1010
 // API
+
+void CMAC_Innit();
+void CMAC_Innit_by_HW();
 void smart_init_cmac();
 void* CMAC_RXSYNC_Check_Thread(void* arg);
 void process_cmac_100g_sr4_full();
@@ -76,5 +79,8 @@ void check_pattern_errors();
 void setup_advanced_cmac_features();
 void test_custom_preamble();
 void check_rx_protocol_errors();
-
+void Check_CMAC_Pin();
+void CMAC_Reset_rx_datapath();
+void Set_CMAC_Hardware_Loopback(uint32_t mode_val, const char* mode_name);
+void Test_All_Loopback_Modes();
 #endif

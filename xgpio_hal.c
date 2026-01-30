@@ -23,7 +23,7 @@ typedef struct {
 /************************************************** *
 root@xilinx-zcu216-2021_2:~# gpiodetect
 gpiochip0 [firmware:zynqmp-firmware:gpio] (4 lines)
-gpiochip1 [a0250000.gpio] (6 lines)
+gpiochip1 [a0250000.gpio] (8 lines)
 gpiochip10 [a02a0000.gpio] (56 lines)
 gpiochip11 [zynqmp_gpio] (174 lines)
 gpiochip2 [a00d0000.gpio] (2 lines)
@@ -46,9 +46,9 @@ static GpiodMap gpiod_hal_table[] = {
     {&GPIO_HS3,           "gpiochip6", NULL, {0}, {0}, 3,        12,       false},
     {&GPIO_ENDFRAME_IRQ,  "gpiochip2", NULL, {0}, {0}, 2,        0,        false},
     {&GPIO_ENDFRAME_IRQ1, "gpiochip3", NULL, {0}, {0}, 1,        0,        false},
-    {&GPIO_SYNC_CMAC,     "gpiochip1", NULL, {0}, {0}, 6,        0,        false},
-    {&GPIO_TX_PREAMBLEIN, "gpiochip9", NULL, {0}, {0}, 32,       24,       false},
-    {&GPIO_RX_PREAMBLEOUT,"gpiochip10",NULL, {0}, {0}, 32,       24,       false}
+    {&GPIO_SYNC_CMAC,     "gpiochip1", NULL, {0}, {0}, 8,        1,        false},
+    {&GPIO_TX_PREAMBLEIN, "gpiochip9", NULL, {0}, {0}, 12,       0,       false},
+    {&GPIO_RX_PREAMBLEOUT,"gpiochip10",NULL, {0}, {0}, 3,        0,       false}
 };
 #define GPIOD_HAL_TABLE_SIZE (sizeof(gpiod_hal_table)/sizeof(gpiod_hal_table[0]))
 
@@ -210,26 +210,26 @@ void XGpio_SetDataDirection(XGpio *InstancePtr, int Channel, uint32_t DirectionM
         // --- CẤU HÌNH LÀM INPUT ---
         if (gpiod_line_request_bulk_input(lines, GPIO_CONSUMER) < 0) {
             // Nếu request thất bại, báo lỗi chi tiết
-            fprintf(stderr, "[HAL ERROR] gpiod_line_request_bulk_input thất bại trên chip '%s' (Kênh %d): ",
-                    map->chip_name, Channel);
+            fprintf(stderr, "[HAL ERROR] gpiod_line_request_bulk_input thất bại trên chip '%s' (Kênh %d): %d pin",
+                    map->chip_name, Channel, width);
             perror(NULL);
         } else {
             // Thông báo thành công (tùy chọn, có thể xóa đi nếu không muốn quá nhiều log)
-            printf("[HAL INFO] Chip '%s' (Kênh %d) INPUT.\n",
-                   map->chip_name, Channel);
+            printf("[HAL INFO] Chip '%s' (Kênh %d) INPUT  %d pin.\n",
+                   map->chip_name, Channel, width);
         }
     } else {
         // --- CẤU HÌNH LÀM OUTPUT ---
         // Tham số cuối là giá trị mặc định, NULL có nghĩa là không thay đổi giá trị hiện tại.
         if (gpiod_line_request_bulk_output(lines, GPIO_CONSUMER, NULL) < 0) {
             // Nếu request thất bại, báo lỗi chi tiết
-            fprintf(stderr, "[HAL ERROR] gpiod_line_request_bulk_output thất bại trên chip '%s' (Kênh %d): ",
-                    map->chip_name, Channel);
+            fprintf(stderr, "[HAL ERROR] gpiod_line_request_bulk_output thất bại trên chip '%s' (Kênh %d):  %d pin",
+                    map->chip_name, Channel, width);
             perror(NULL); // In ra lỗi hệ thống, ví dụ "Operation not permitted"
         } else {
             // Thông báo thành công (tùy chọn)
-            printf("[HAL INFO] Chip '%s' (Kênh %d) OUTPUT.\n",
-                   map->chip_name, Channel);
+            printf("[HAL INFO] Chip '%s' (Kênh %d) OUTPUT  %d pin.\n",
+                   map->chip_name, Channel, width);
         }
     }
 }

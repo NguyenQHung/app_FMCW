@@ -5,6 +5,7 @@
 
 // --- BIẾN ĐIỀU KHIỂN LUỒNG ---
 extern int trigger_adc;
+extern int trigger_FFT;
 extern pthread_mutex_t radar_data_mutex;
 
 // Định nghĩa các địa chỉ vật lý
@@ -44,6 +45,8 @@ int DMA_ADC_Read_Once(uint64_t phys_addr, uint32_t length);
 
 // Workers
 void* ADC_Worker_Thread(void* arg);
-void* FFT_Monitor_Thread(void* arg);
+void* FFT_Monitor_SG_S2MM_Thread(void* arg);
+int DMA_FFT_Read_Once(uint64_t phys_addr, uint32_t length);
+void* FFT_Worker_Thread(void* arg);
 
 #endif // DMA_DATA_H

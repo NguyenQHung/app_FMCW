@@ -108,6 +108,7 @@ pthread_t  thread_CMAC;
 pthread_t  thread_CMAC_TX;
 
 int trigger_adc = 0; // Cờ báo hiệu cần đọc ADC
+int trigger_FFT = 0; // Cờ báo hiệu cần đọc ADC
 int trigger_idle = 0; // Cờ báo hiệu cần đọc ADC
 int DMA_cmd = 0;
 int DMA_cnt = 0;
@@ -283,11 +284,15 @@ int main(void)
     xil_printf("IP PC: 192.168.1.10\n");
 
 	Radar_Innit();
-
-    
 	usleep(1000000); // cho 1 s cho cmac on dinh
+
+    	// Trong hàm main() trước khi tạo thread
+	pthread_mutex_init(&radar_data_mutex, NULL);
+
     // 1. Kiểm tra CMAC
-    smart_init_cmac();
+    //smart_init_cmac();
+    pthread_create(&thread_CMAC, NULL, force_tx_and_check_pc, NULL);
+    xil_printf("pthread_create(&thread_CMAC, NULL, force_tx_and_check_pc, NULL) => done \r\n");
 
     //khởi t
 	Start_Test_System(); // kiem tra ok
@@ -316,8 +321,7 @@ int main(void)
 
     XGpio_Interrupt_Innit();
 
-	// Trong hàm main() trước khi tạo thread
-	pthread_mutex_init(&radar_data_mutex, NULL);
+
 
 	// if (pthread_create(&udp_tid, NULL, udp_control_thread, NULL) != 0) {
     //     perror("Failed to create UDP control thread");
@@ -346,21 +350,20 @@ int main(void)
 		xil_printf("pthread_create(&FFT_tid, NULL, XGpio_Interrupt_IRQ, NULL) => done \r\n");
 	}
 
-    pthread_create(&thread_CMAC, NULL, force_tx_and_check_pc, NULL);
-    xil_printf("pthread_create(&thread_CMAC, NULL, force_tx_and_check_pc, NULL) => done \r\n");
+    
 
     pthread_create(&thread_adc, NULL, ADC_Worker_Thread, NULL);
     xil_printf("pthread_create(&thread_adc, NULL, ADC_Worker_Thread, NULL) => done \r\n");
 
-    pthread_create(&thread_fft, NULL, FFT_Monitor_Thread, NULL);
-    xil_printf("pthread_create(&thread_fft, NULL, FFT_Monitor_Thread, NULL) => done \r\n");
+    pthread_create(&thread_fft, NULL, FFT_Monitor_SG_S2MM_Thread, NULL);
+    xil_printf("pthread_create(&thread_fft, NULL, FFT_Monitor_SG_S2MM_Thread, NULL) => done \r\n");
 
     //run_full_dma_loopback_test(IDX_CMAC_TX_BUF, IDX_CMAC_RX_BUF, 1024 * 1024);
 
     //test_external_loopback_cable();
 
-    pthread_create(&thread_CMAC_TX, NULL, DMA_Isolation_Test_Thread, NULL);
-    xil_printf("pthread_create(&thread_CMAC_TX, NULL, DMA_Isolation_Test_Thread, NULL) => done \r\n");
+    //pthread_create(&thread_CMAC_TX, NULL, DMA_Isolation_Test_Thread, NULL);
+    //xil_printf("pthread_create(&thread_CMAC_TX, NULL, DMA_Isolation_Test_Thread, NULL) => done \r\n");
 
 	/* receive and process packets */
 	while (1)
@@ -401,11 +404,16 @@ int main(void)
             DMA_cmd = 0;
             pthread_mutex_lock(&radar_data_mutex);
             Check_ADC_Raw++;
+            
+            if((Check_ADC_Raw % 10) == 0) trigger_FFT = 1;
+            
             if(Check_ADC_Raw > 100)
             {
                 Check_ADC_Raw = 0;
                 trigger_adc = 1; // Kích hoạt đọc ADC trong thread kia, 10s 1 lan
             }
+
+
             ADF4360_Set_Freq(1400);
 	        usleep(20);
 	        ADF4159_Set_Freq(7700);

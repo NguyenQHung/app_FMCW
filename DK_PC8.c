@@ -771,6 +771,63 @@ void Radar_Read_PC8_CMD(void)
 	PC8.DAC_H_E_Val			= Radar.PC8_Config[301] * 256 + Radar.PC8_Config[302];
 	PC8.DAC_Center_Val		= Radar.PC8_Config[303] * 256 + Radar.PC8_Config[304];
 
+	// 1. Trích xuất thời gian từ gói tin PC gửi xuống
+// Map theo đúng thứ tự byte bạn đã code trên C#
+int pc_day   = Radar.PC8_Config[310];
+int pc_month = Radar.PC8_Config[311];
+int pc_year  = Radar.PC8_Config[312] * 256 + Radar.PC8_Config[313];
+int pc_hour  = Radar.PC8_Config[314];
+int pc_min   = Radar.PC8_Config[315];
+int pc_sec   = Radar.PC8_Config[316];
+
+	// Chỉ xử lý nếu dữ liệu năm hợp lý (tránh trường hợp chưa nhận được gói tin, toàn số 0)
+	if (pc_year > 2023) 
+	{
+		// 2. Lấy thời gian hiện tại của Linux
+		time_t rawtime_sys;
+		time(&rawtime_sys); // Lấy timestamp hiện tại
+
+		// 3. Chuyển đổi thời gian của PC sang dạng timestamp (time_t) để so sánh
+		struct tm tm_pc = {0};
+		
+		tm_pc.tm_year = pc_year - 1900; // struct tm tính năm từ 1900
+		tm_pc.tm_mon  = pc_month - 1;   // struct tm tính tháng từ 0-11
+		tm_pc.tm_mday = pc_day;
+		tm_pc.tm_hour = pc_hour;
+		tm_pc.tm_min  = pc_min;
+		tm_pc.tm_sec  = pc_sec;
+		tm_pc.tm_isdst = -1; // Để hệ thống tự xác định Daylight Saving Time
+
+		time_t rawtime_pc = mktime(&tm_pc);
+
+		// 4. Tính độ chênh lệch (giây)
+		double diff_seconds = difftime(rawtime_sys, rawtime_pc);
+		
+		// Lấy trị tuyệt đối
+		if (diff_seconds < 0) diff_seconds = -diff_seconds;
+
+		// 5. Nếu chênh lệch lớn hơn ngưỡng cho phép (ví dụ: > 2 giây) thì cập nhật
+		if (diff_seconds > 2.0) 
+		{
+			printf("Phat hien sai lech gio! System: %ld, PC: %ld. Dang cap nhat...\n", rawtime_sys, rawtime_pc);
+
+			struct timeval tv;
+			tv.tv_sec = rawtime_pc;
+			tv.tv_usec = 0;
+
+			// Cập nhật giờ hệ thống (Cần quyền root/sudo mới chạy được lệnh này)
+			if (settimeofday(&tv, NULL) < 0) 
+			{
+				perror("Loi: Khong the settimeofday (can quyen root?)");
+			} 
+			else 
+			{
+				// Tùy chọn: Ghi xuống Hardware Clock (RTC) để lưu lại sau khi tắt nguồn
+				// system("hwclock -w"); 
+				printf("Da cap nhat thoi gian Linux theo PC.\n");
+			}
+		}
+	}
 
 	if(PC8.ADC_ATTiv != PC8.ADC_ATTi)// 20
 	{

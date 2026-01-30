@@ -141,8 +141,11 @@ void Radar_Innit_GPIO(void)
 		xil_printf("psgpio ok\r\n");
 	}
 
+		xil_printf("SFP_LPMODE = 0\r\n");
 		XGpioPs_WritePin(&psgpio, SFP_LPMODE, 0);
+		xil_printf("SFP_MODE_SEL = 0\r\n");
 		XGpioPs_WritePin(&psgpio, SFP_MODE_SEL, 0);
+		xil_printf("SFP_RESET = 1\r\n");
 		XGpioPs_WritePin(&psgpio, SFP_RESET, 1);
 
 	Status0 = XGpio_Initialize(&GPIO_ENDFRAME_IRQ, ENDFRAME_IRQ_PORT_ID);
@@ -193,27 +196,32 @@ void Radar_Innit_GPIO(void)
 	if (Status0 == XST_SUCCESS)
 	{
 		// cau hinh DIR
-		XGpio_SetDataDirection(&GPIO_SYNC_CMAC, 1, 0x3F);
-		//XGpio_SetDataDirection(&GPIO_HS3, 2, 0xfff);
+		XGpio_SetDataDirection(&GPIO_SYNC_CMAC, 1, 0xFF); // dang su dung kenh 1
+		XGpio_SetDataDirection(&GPIO_SYNC_CMAC, 2, 0x00); // khong co kenh 2
 		xil_printf("GPIO_SYNC_CMAC ok\r\n");
+
+		XGpio_DiscreteWrite(&GPIO_SYNC_CMAC, 2, 0);
 	}
 
 	Status0 = XGpio_Initialize(&GPIO_TX_PREAMBLEIN, GPIO_TX_PREAMBLEIN_ID);
 	if (Status0 == XST_SUCCESS)
 	{
 		// cau hinh DIR
-		XGpio_SetDataDirection(&GPIO_TX_PREAMBLEIN, 1, 0x00000000);
-		XGpio_SetDataDirection(&GPIO_TX_PREAMBLEIN, 2, 0x00000000);
+		XGpio_SetDataDirection(&GPIO_TX_PREAMBLEIN, 1, 0x0000);
+		//XGpio_SetDataDirection(&GPIO_TX_PREAMBLEIN, 2, 0x00000000);
 		xil_printf("GPIO_TX_PREAMBLEIN ok\r\n");
+		XGpio_DiscreteWrite(&GPIO_RX_PREAMBLEOUT, 1, 0x0000);
 	}
 
 	Status0 = XGpio_Initialize(&GPIO_RX_PREAMBLEOUT, GPIO_RX_PREAMBLEOUT_ID);
 	if (Status0 == XST_SUCCESS)
 	{
 		// cau hinh DIR
-		XGpio_SetDataDirection(&GPIO_RX_PREAMBLEOUT, 1, 0xffffffff);
-		XGpio_SetDataDirection(&GPIO_RX_PREAMBLEOUT, 2, 0xffffffff);
+		XGpio_SetDataDirection(&GPIO_RX_PREAMBLEOUT, 1, 0x00);
+		//XGpio_SetDataDirection(&GPIO_RX_PREAMBLEOUT, 2, 0x0000);
 		xil_printf("GPIO_RX_PREAMBLEOUT ok\r\n");
+
+		XGpio_DiscreteWrite(&GPIO_RX_PREAMBLEOUT, 1, 0x04);
 	}
 
 }

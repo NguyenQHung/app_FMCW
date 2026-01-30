@@ -19,7 +19,7 @@ struct AFC_Struct 			AFC1;
 struct AIS_Struct			AIS_Data;
 struct UDP_Struct  			UDP_Frame;
 struct UDP_Phase  			UDP_Phase1;
-//struct UDP_Phase  			UDP_Phase2;
+struct CMAC_Struct  		CMAC_Struct1;
 
 u8 SendBuffer0[TEST_BUFFER_SIZE];	/* Buffer for Transmitting Data */
 u8 RecvBuffer0[TEST_BUFFER_SIZE];	/* Buffer for Receiving Data */
@@ -514,16 +514,12 @@ void Radar_Innit(void)
 {
 	Radar_Innit_Frame();
 	Radar_Innit_Uart();
+	CMAC_Innit();
 	Radar_Innit_SPI();
 	Radar_Innit_GPIO();
 	Erob_Data_Innit();
 	
-	//SI570_Set_Freq_MHz(161.1328125);
-	//SI570_Set_Freq_MHz(156.250000);	
 	SI570_Set_Freq_MHz(156.250000);	
-
-	//BRAM_Manager_Init();
-
 
 	ADF4159_VCO_ENable(0);
 

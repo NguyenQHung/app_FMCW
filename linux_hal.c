@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 //static int mem_fd = -1;
 extern  int trigger_adc; // Cờ báo hiệu cần đọc ADC
+extern  int trigger_FFT; // Cờ báo hiệu cần đọc ADC
 extern  int trigger_idle;
 extern  XUartLite 			Uart0;					/* Instance of the UartLite Device */
 extern  XUartLite 			Uart1;					/* Instance of the UartLite Device */
@@ -134,10 +135,10 @@ void hal_cleanup() {
 int BRAM_Manager_Init() 
 {
     // 1. Mở cho BRAM (Dùng O_SYNC để an toàn, vì BRAM nhỏ không cần cache)
-    int fd_sync = open("/dev/mem", O_RDWR | O_SYNC);
+    int fd_sync = open("/dev/mem", O_RDWR | O_SYNC); // Non-Cached
 
     // 2. Mở cho DDR RAM (KHÔNG dùng O_SYNC để bật Cache, giúp đạt tốc độ 2GB/s)
-    int fd_cache = open("/dev/mem", O_RDWR); 
+    int fd_cache = open("/dev/mem", O_RDWR); // Cached
 
     // mở cho GPIO, RFDC
     int mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
@@ -158,7 +159,7 @@ int BRAM_Manager_Init()
             bram_list[i].virt_addr = (uint8_t*)mem_map_base + offset;
         } 
         else {
-            // Thêm điều kiện này vào BRAM_Manager_Init để map non-cached cho Descriptor
+            //Thêm điều kiện này vào BRAM_Manager_Init để map non-cached cho Descriptor
             if (bram_list[i].phys_addr == 0x50000000) // Địa chỉ descriptor
             {
                 // Map riêng Descriptor NON-CACHED
@@ -166,7 +167,8 @@ int BRAM_Manager_Init()
                                             PROT_READ | PROT_WRITE, MAP_SHARED, 
                                             fd_sync, bram_list[i].phys_addr);
             }
-            else if (bram_list[i].phys_addr >= 0x40000000 && bram_list[i].phys_addr < 0x70000000) 
+            else 
+            if (bram_list[i].phys_addr >= 0x40000000 && bram_list[i].phys_addr < 0x70000000) 
             {
                 // Map Data Buffer CACHEABLE (tất cả các buffer còn lại)
                 bram_list[i].virt_addr = mmap(NULL, bram_list[i].size, 
