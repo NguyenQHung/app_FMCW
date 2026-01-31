@@ -121,6 +121,14 @@ typedef struct {
     void* virt_addr;      // Con trỏ ảo dùng để memcpy trực tiếp
 } BRAM_Region;
 
+struct dma_buf_descriptor{
+    const char *dma_name;
+    uint8_t **buffer;
+    uint32_t numbuf;
+    unsigned long size;
+    uint32_t direction;
+    int fd;
+};
 // Định nghĩa Index cho 15 vùng để gọi code cho dễ
 enum {
     IDX_PULSE16 = 0, 
@@ -161,6 +169,8 @@ int DMA_FFT_Read_Continuous(uint64_t dest_phys_addr);
 int BRAM_Manager_Init(void);
 void BRAM_Manager_Close(void);
 uint32_t BRAM_Get_Phys_Addr(int index);
+void *DMA_Get_Buffer_Addr(int hal_index, int buffer_index);
+int trigger_dma(int hal_index);
 void* BRAM_Get_Virt_Addr(int index);
 size_t BRAM_Get_Size(int index);
 int Linux_memcpy( void* dest_buffer, uint32_t phys_addr, size_t size);
