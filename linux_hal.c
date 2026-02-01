@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include "dma-proxy.h"
 //static int mem_fd = -1;
 extern  int trigger_adc; // Cờ báo hiệu cần đọc ADC
 extern  int trigger_FFT; // Cờ báo hiệu cần đọc ADC
@@ -58,6 +59,9 @@ static int mem_fd = -1;
 // PHẦN 1: ĐỊNH NGHĨA VÀ ÁNH XẠ THỰC TẾ
 // =============================================================================
 static volatile void *mem_map_base = NULL;
+struct dma_buf_descriptor dma_buf_list[] = {
+    [IDX_DMA_ADC]  = {"/dev/dma_proxy_adc", NULL, 1, 4194304, DMA_PROXY_DEV_TO_MEM, -1},
+};
 // Định nghĩa lại danh sách vùng nhớ
 BRAM_Region bram_list[] = {
     // --- CÁC KHỐI BRAM TRÊN PL (0xA0xxxxxx) ---
@@ -78,49 +82,106 @@ BRAM_Region bram_list[] = {
     [IDX_FB17Q]     = {"fb17q",        0xA0137000, 4096,  NULL},
 
     // --- THANH GHI ĐIỀU KHIỂN (REGISTERS) ---
-    [IDX_DMA_ADC]   = {"REG_DMA_ADC",  0xA0240000, 65536, NULL},
-    [IDX_DMA_CMAC]  = {"REG_DMA_CMAC", 0xA0280000, 65536, NULL},
-    [IDX_DMA_FFT]   = {"REG_DMA_FFT",  0xA01C0000, 65536, NULL},
-    [IDX_CMAC_REG]  = {"REG_CMAC",     0xA0270000, 65536, NULL},
+    // [IDX_DMA_ADC]   = {"REG_DMA_ADC",  0xA0240000, 65536, NULL},
+    // [IDX_DMA_CMAC]  = {"REG_DMA_CMAC", 0xA0280000, 65536, NULL},
+    // [IDX_DMA_FFT]   = {"REG_DMA_FFT",  0xA01C0000, 65536, NULL},
+    // [IDX_CMAC_REG]  = {"REG_CMAC",     0xA0270000, 65536, NULL},
 
-    // --- VÙNG RAM CHO ADC (256MB) ---
-    [IDX_ADC_BUF]   = {"BUF_ADC_RAM",  0x40000000, 0x10000000, NULL}, 
+    // // --- VÙNG RAM CHO ADC (256MB) ---
+    // [IDX_ADC_BUF]   = {"BUF_ADC_RAM",  0x40000000, 0x10000000, NULL}, 
 
-    // --- VÙNG RAM CHO FFT (256MB) ---
-    [IDX_DMA_FFT_DESC] = {"FFT_DESC",  0x50000000, 4096,       NULL}, // Descriptor
-    [IDX_FFT_BUF]      = {"BUF_FFT_RAM", 0x50001000, 0x0FFF0000, NULL}, // Data (phần còn lại)
+    // // --- VÙNG RAM CHO FFT (256MB) ---
+    // [IDX_DMA_FFT_DESC] = {"FFT_DESC",  0x50000000, 4096,       NULL}, // Descriptor
+    // [IDX_FFT_BUF]      = {"BUF_FFT_RAM", 0x50001000, 0x0FFF0000, NULL}, // Data (phần còn lại)
 
-    // --- VÙNG RAM CHO CMAC (Chia đôi 256MB thành TX và RX) ---
-    [IDX_CMAC_TX_BUF]  = {"BUF_CMAC_TX", 0x60000000, 0x08000000, NULL}, // 128MB đầu cho TX
-    [IDX_CMAC_RX_BUF]  = {"BUF_CMAC_RX", 0x68000000, 0x08000000, NULL}, // 128MB sau cho RX
+    // // --- VÙNG RAM CHO CMAC (Chia đôi 256MB thành TX và RX) ---
+    // [IDX_CMAC_TX_BUF]  = {"BUF_CMAC_TX", 0x60000000, 0x08000000, NULL}, // 128MB đầu cho TX
+    // [IDX_CMAC_RX_BUF]  = {"BUF_CMAC_RX", 0x68000000, 0x08000000, NULL}, // 128MB sau cho RX
 };
+int trigger_dma(int hal_index){
 
+    if(hal_index < 0 || hal_index >= HAL_TOTAL_COUNT)
+        return -100;
+    int fd = dma_buf_list[hal_index].fd;
+    return ioctl(fd, XFER);
+
+
+}
+static void dma_buffer_init()
+{
+    //init dma buffer for adc
+
+    struct sg_info sg_info;
+    int ret;
+    for(int i = 0 ; i < HAL_TOTAL_COUNT; i++)
+    {
+        if(dma_buf_list[i].dma_name == NULL)
+            continue;
+        int fd = open(dma_buf_list[i].dma_name, O_RDWR);
+        if(fd < 0)
+            perror("Failed to open device\n");
+        else{
+            dma_buf_list[i].fd = fd;
+            sg_info.size = dma_buf_list[i].size;
+            sg_info.numsg = dma_buf_list[i].numbuf;
+            sg_info.direction = dma_buf_list[i].direction;
+            ret = ioctl(fd, ALLOC_SG, &sg_info);
+            if(ret < 0)
+            {
+                perror("Failed to allocate buffer");
+                close(fd);
+                dma_buf_list[i].fd = -1;
+            }else
+            {
+                dma_buf_list[i].buffer = (uint8_t**)malloc(sizeof(uint8_t*)*dma_buf_list[i].numbuf);
+                if(dma_buf_list[i].buffer == NULL)
+                {
+                    printf("Cannot allocate buffer");
+                    close(fd);
+                    dma_buf_list[i].fd = -1;
+                    continue;
+                }
+                for(int k = 0; i < dma_buf_list[i].numbuf; k++)
+                {
+                    dma_buf_list[i].buffer[k] = mmap(NULL, dma_buf_list[i].size, PROT_READ | PROT_WRITE, MAP_SHARED, fd,0);
+                    if(dma_buf_list[i].buffer[k] == NULL)
+                    {
+                        printf("failed to allocate buffer %d order\n",k);
+                    }
+                }
+            }
+        }
+    }
+
+
+}
 int hal_init() 
 {
     BRAM_Manager_Init();
+    dma_buffer_init();
 
     // Địa chỉ Base vật lý từ Vivado
-    ADDR_CMAC_REG  =    BRAM_Get_Phys_Addr(IDX_CMAC_REG);
-    ADDR_DMA_CMAC  =    BRAM_Get_Phys_Addr(IDX_DMA_CMAC);
-    ADDR_DMA_ADC   =    BRAM_Get_Phys_Addr(IDX_DMA_ADC);
-    ADDR_DMA_FFT   =    BRAM_Get_Phys_Addr(IDX_DMA_FFT);
+    // ADDR_CMAC_REG  =    BRAM_Get_Phys_Addr(IDX_CMAC_REG);
+    // ADDR_DMA_CMAC  =    BRAM_Get_Phys_Addr(IDX_DMA_CMAC);
+    // ADDR_DMA_ADC   =    BRAM_Get_Phys_Addr(IDX_DMA_ADC);
+    // ADDR_DMA_FFT   =    BRAM_Get_Phys_Addr(IDX_DMA_FFT);
 
-    // Các vùng RAM Reserved (Vật lý)
-    PHYS_ADC_BUF   =    BRAM_Get_Phys_Addr(IDX_ADC_BUF);
-    PHYS_FFT_DESC  =    BRAM_Get_Phys_Addr(IDX_DMA_FFT_DESC); // Đặt Descriptor tại đầu vùng FFT RAM
-    PHYS_FFT_BUF   =    BRAM_Get_Phys_Addr(IDX_FFT_BUF);
-    PHYS_CMAC_BUF  =    BRAM_Get_Phys_Addr(IDX_CMAC_TX_BUF);
+    // // Các vùng RAM Reserved (Vật lý)
+    // PHYS_ADC_BUF   =    BRAM_Get_Phys_Addr(IDX_ADC_BUF);
+    // PHYS_FFT_DESC  =    BRAM_Get_Phys_Addr(IDX_DMA_FFT_DESC); // Đặt Descriptor tại đầu vùng FFT RAM
+    // PHYS_FFT_BUF   =    BRAM_Get_Phys_Addr(IDX_FFT_BUF);
+    // PHYS_CMAC_BUF  =    BRAM_Get_Phys_Addr(IDX_CMAC_TX_BUF);
 
-    xil_printf("ADDR_CMAC_REG: 0x%X \n", ADDR_CMAC_REG);
-    xil_printf("ADDR_DMA_CMAC: 0x%X \n", ADDR_DMA_CMAC);
-    xil_printf("ADDR_DMA_ADC: 0x%X \n", ADDR_DMA_ADC);
-    xil_printf("ADDR_DMA_FFT: 0x%X \n", ADDR_DMA_FFT);
-    xil_printf("PHYS_ADC_BUF: 0x%X \n", PHYS_ADC_BUF);
-    xil_printf("PHYS_FFT_DESC: 0x%X \n", PHYS_FFT_DESC);
-    xil_printf("PHYS_FFT_BUF: 0x%X \n", PHYS_FFT_BUF);
-    xil_printf("PHYS_CMAC_BUF: 0x%X \n", PHYS_CMAC_BUF);
+    // xil_printf("ADDR_CMAC_REG: 0x%X \n", ADDR_CMAC_REG);
+    // xil_printf("ADDR_DMA_CMAC: 0x%X \n", ADDR_DMA_CMAC);
+    // xil_printf("ADDR_DMA_ADC: 0x%X \n", ADDR_DMA_ADC);
+    // xil_printf("ADDR_DMA_FFT: 0x%X \n", ADDR_DMA_FFT);
+    // xil_printf("PHYS_ADC_BUF: 0x%X \n", PHYS_ADC_BUF);
+    // xil_printf("PHYS_FFT_DESC: 0x%X \n", PHYS_FFT_DESC);
+    // xil_printf("PHYS_FFT_BUF: 0x%X \n", PHYS_FFT_BUF);
+    // xil_printf("PHYS_CMAC_BUF: 0x%X \n", PHYS_CMAC_BUF);
 
-    xil_printf("[HAL] Successfully mapped physical address 0x%X -> virtual memory.\n", MAP_BASE_ADDR);
+    // xil_printf("[HAL] Successfully mapped physical address 0x%X -> virtual memory.\n", MAP_BASE_ADDR);
     return 0;
 }
 
@@ -177,6 +238,10 @@ int BRAM_Manager_Init()
             }
         }
     }
+
+
+
+
     return 0;
 }
 
@@ -233,7 +298,12 @@ void* BRAM_Get_Virt_Addr(int index) {
     if (index < 0 || index >= HAL_TOTAL_COUNT) return NULL;
     return bram_list[index].virt_addr;
 }
-
+void *DMA_Get_Buffer_Addr(int hal_index, int buffer_index)
+{
+    if(hal_index < 0 || hal_index >= HAL_TOTAL_COUNT) return NULL;
+    if(buffer_index < 0 || buffer_index >= dma_buf_list[hal_index].numbuf) return NULL;
+    return dma_buf_list[hal_index].buffer[buffer_index]; 
+}
 uint32_t BRAM_Get_Phys_Addr(int index) {
     if (index < 0 || index >= HAL_TOTAL_COUNT) return NULL;
     return bram_list[index].phys_addr;
