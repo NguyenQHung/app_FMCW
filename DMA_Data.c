@@ -1,4 +1,5 @@
 #include "DMA_Data.h"
+#include "dma-proxy.h"
 int FFT_cnt = 0;
 
 static AXI_DMA_Descriptor *FFT_Desc_Ring;// = NULL;
@@ -14,87 +15,88 @@ extern pthread_mutex_t radar_data_mutex; // Khai báo mutex toàn cục
 #define FFT_PACKET_SIZE 1048576
 
 int DMA_ADC_Read_Once(uint64_t phys_addr, uint32_t length) {
-  if (phys_addr % 64 != 0)
-    return -4;
+    return trigger_dma(IDX_ADC_BUF);
+    // if (phys_addr % 64 != 0) return -4;
 
-  // 1. Reset DMA
-  Xil_Out32(ADDR_DMA_ADC + 0x30, 0x4);
+    // // 1. Reset DMA
+    // Xil_Out32(ADDR_DMA_ADC + 0x30, 0x4); 
+    // while (Xil_In32(ADDR_DMA_ADC + 0x30) & 0x4);
 
-  // 2. Clear các bit Interrupt cũ (W1C - Write 1 to Clear)
-  // Ghi 0xF000 để xóa sạch các bit lỗi và bit Done cũ
-  Xil_Out32(ADDR_DMA_ADC + 0x34, 0x0000F000);
+    // // 2. Clear các bit Interrupt cũ (W1C - Write 1 to Clear)
+    // // Ghi 0xF000 để xóa sạch các bit lỗi và bit Done cũ
+    // Xil_Out32(ADDR_DMA_ADC + 0x34, 0x0000F000); 
 
-  // 3. Khởi chạy DMA
-  Xil_Out32(ADDR_DMA_ADC + 0x30, 0x1); // Run
-  Xil_Out32(ADDR_DMA_ADC + 0x48, (uint32_t)phys_addr);
-  Xil_Out32(ADDR_DMA_ADC + 0x4C, (uint32_t)(phys_addr >> 32));
-  Xil_Out32(ADDR_DMA_ADC + 0x58, length); // Kích hoạt
+    // // 3. Khởi chạy DMA
+    // Xil_Out32(ADDR_DMA_ADC + 0x30, 0x1); // Run
+    // Xil_Out32(ADDR_DMA_ADC + 0x48, (uint32_t)phys_addr);
+    // Xil_Out32(ADDR_DMA_ADC + 0x4C, (uint32_t)(phys_addr >> 32));
+    // Xil_Out32(ADDR_DMA_ADC + 0x58, length); // Kích hoạt
 
-  // 4. Polling chờ Xong (0x02) hoặc Đã nhận đủ gói (0x1000)
-  int timeout = 10000;
-  while (1) {
-    uint32_t sr = Xil_In32(ADDR_DMA_ADC + 0x34);
+    // // 4. Polling chờ Xong (0x02) hoặc Đã nhận đủ gói (0x1000)
+    // int timeout = 10000;
+    // while (1) {
+    //     uint32_t sr = Xil_In32(ADDR_DMA_ADC + 0x34);
+        
+    //     // SỬA Ở ĐÂY: Chấp nhận cả bit 1 (Idle) và bit 12 (IOC)
+    //     if (sr & 0x1002) {
+    //         // Xóa bit IOC ngay sau khi nhận xong để chuẩn bị cho gói sau
+    //         Xil_Out32(ADDR_DMA_ADC + 0x34, 0x00001000); 
+    //         break; 
+    //     }
 
-    // SỬA Ở ĐÂY: Chấp nhận cả bit 1 (Idle) và bit 12 (IOC)
-    if (sr & 0x1002) {
-      // Xóa bit IOC ngay sau khi nhận xong để chuẩn bị cho gói sau
-      Xil_Out32(ADDR_DMA_ADC + 0x34, 0x00001000);
-      break;
-    }
+    //     if (sr & 0x70) {
+    //         printf("[ADC] DMA Error! SR: 0x%08X\n", sr);
+    //         return -2;
+    //     }
 
-    if (sr & 0x70) {
-      printf("[ADC] DMA Error! SR: 0x%08X\n", sr);
-      return -2;
-    }
+    //     usleep(10);
+    //     if (--timeout == 0) {
+    //         // Nếu timeout, in ra số byte thực tế đã nhận được
+    //         // Trong S2MM, đọc 0x58 sẽ cho biết số byte đã nhận
+    //         uint32_t actual_bytes = Xil_In32(ADDR_DMA_ADC + 0x58);
+    //         printf("[ADC] Timeout! SR: 0x%X, Recv: %u/%u\n", sr, actual_bytes, length);
+    //         return -3;
+    //     }
+    // }
+    int ret;
 
-    usleep(10);
-    if (--timeout == 0) {
-      // Nếu timeout, in ra số byte thực tế đã nhận được
-      // Trong S2MM, đọc 0x58 sẽ cho biết số byte đã nhận
-      uint32_t actual_bytes = Xil_In32(ADDR_DMA_ADC + 0x58);
-      printf("[ADC] Timeout! SR: 0x%X, Recv: %u/%u\n", sr, actual_bytes,
-             length);
-      return -3;
-    }
-  }
-  return 0;
+    return 0;
 }
 
-void *ADC_Worker_Thread(void *arg) {
-  static int adc_count = 0;
-  // Lấy con trỏ ảo để kiểm tra dữ liệu
-  uint32_t *data_ptr = (uint32_t *)BRAM_Get_Virt_Addr(IDX_ADC_BUF);
+void* ADC_Worker_Thread(void* arg) {
+    static int adc_count = 0;
+    // Lấy con trỏ ảo để kiểm tra dữ liệu
+    uint32_t *data_ptr = (uint32_t*)DMA_Get_Buffer_Addr(IDX_ADC_BUF,0);
 
   printf("[ADC] Thread started for 4MB packets.\n");
 
-  while (1) {
-    if (trigger_adc) {
-      // Đọc đúng 4,194,304 bytes
-      if (DMA_ADC_Read_Once(PHYS_ADC_BUF, ADC_PACKET_SIZE) == 0) {
-        uint32_t *data = (uint32_t *)BRAM_Get_Virt_Addr(IDX_ADC_BUF);
-        // In 4 word đầu tiên để xem nó còn là 0xABCDE000 (pattern cũ) hay đã
-        // đổi
-        printf("[ADC] SUCCESS! Data[0..3]: 0x%08X 0x%08X 0x%08X 0x%08X\n",
-               data[0], data[1], data[2], data[3]);
-        adc_count++;
+    while(1) {
+        if (trigger_adc) {
+            // Đọc đúng 4,194,304 bytes
+            if (DMA_ADC_Read_Once(PHYS_ADC_BUF, ADC_PACKET_SIZE) == 0) {
+                uint32_t *data = (uint32_t*)DMA_Get_Buffer_Addr(IDX_ADC_BUF,0);
+                // In 4 word đầu tiên để xem nó còn là 0xABCDE000 (pattern cũ) hay đã đổi
+                printf("[ADC] SUCCESS! Data[0..3]: 0x%08X 0x%08X 0x%08X 0x%08X\n", 
+                data[0], data[1], data[2], data[3]);
+                adc_count++;
+                
+                // Mỗi 100 gói in kiểm tra 1 lần
+                if (adc_count % 100 == 0) {
+                    printf("[ADC] 100 Frames OK. Data[0]=0x%08X\n", data_ptr[0]);
+                }
 
-        // Mỗi 100 gói in kiểm tra 1 lần
-        if (adc_count % 100 == 0) {
-          printf("[ADC] 100 Frames OK. Data[0]=0x%08X\n", data_ptr[0]);
+                pthread_mutex_lock(&radar_data_mutex);
+                trigger_adc = 0; 
+                pthread_mutex_unlock(&radar_data_mutex);
+            } else {
+                // Nếu lỗi, in ra số byte thực tế nhận được
+                // uint32_t bytes_rec = Xil_In32(ADDR_DMA_ADC + 0x58);
+                printf("[ADC] Error! Bytes received before TLAST\n");
+            }
         }
-
-        pthread_mutex_lock(&radar_data_mutex);
-        trigger_adc = 0;
-        pthread_mutex_unlock(&radar_data_mutex);
-      } else {
-        // Nếu lỗi, in ra số byte thực tế nhận được
-        uint32_t bytes_rec = Xil_In32(ADDR_DMA_ADC + 0x58);
-        printf("[ADC] Error! Bytes received before TLAST: %u\n", bytes_rec);
-      }
+        usleep(50); // Tốc độ cao, chỉ nên nghỉ rất ngắn
     }
-    usleep(50); // Tốc độ cao, chỉ nên nghỉ rất ngắn
-  }
-  return NULL;
+    return NULL;
 }
 
 
