@@ -690,5 +690,8 @@ struct CMAC_Struct{
     uint8_t interal_rx_local_fault;     ///
     uint8_t stat_rx_local_fault;     	///
     uint8_t stat_rx_miss_aligned;       ///
-    uint8_t usr_tx_bad_fcs;          	///
+    uint8_t stat_tx_bad_fcs;          	///
+    uint8_t SFP_intl;       			///
+    uint8_t SFP_MODPRSL;          		///
+    uint8_t SFP_Ready;          		///
 };

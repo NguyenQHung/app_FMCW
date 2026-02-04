@@ -28,24 +28,24 @@ extern XGpio  GPIO_HS3;				//	GPIO_HS3
 void Radar_Hyper_Output(unsigned int Channel, unsigned int Data)
 {
 	XGpio_DiscreteWrite(&GPIO_HS1, 1, Channel);
-	usleep(1);
+	usleep(5);
 	XGpio_DiscreteWrite(&GPIO_HS1, 2, Data);
-	usleep(1);
+	usleep(5);
 	XGpio_DiscreteWrite(&GPIO_HS1, 1, Channel | 0x0200);
-	usleep(2);
+	usleep(5);
 	XGpio_DiscreteWrite(&GPIO_HS1, 1, Channel);
-	usleep(1);
+	usleep(5);
 }
 
 unsigned int Radar_Hyper_Input(unsigned char Channel)
 {
 	unsigned int Data = 0;
 	XGpio_DiscreteWrite(&GPIO_HS2, 1, Channel);
-	usleep(1);
+	usleep(5);
 	XGpio_DiscreteWrite(&GPIO_HS2, 1, Channel | 0x0100);
-	usleep(1);
+	usleep(5);
 	Data = XGpio_DiscreteRead(&GPIO_HS2, 2);
-	usleep(1);
+	usleep(5);
 	XGpio_DiscreteWrite(&GPIO_HS2, 1, Channel);
 
 	return Data;

@@ -34,14 +34,16 @@
 // #define START_XFER 		_IOW('a','b',int32_t*)
 #define XFER 			_IO('a','c')
 #define RECV			_IO('a','d')
-#define ALLOC_SG     _IOW('a','f', struct sg_info *)
+#define ALLOC_SG     _IOW('a','f', struct dma_buf_info *)
+#define ALLOC_CYCLIC _IOW('a','e', struct dma_buf_info *)
 #define FREE_SG		 _IO('a','b')
+#define WAIT_CYCLIC	 _IO('a','g')
 #define DMA_PROXY_MEM_TO_MEM 0
 #define	DMA_PROXY_MEM_TO_DEV 1
 #define	DMA_PROXY_DEV_TO_MEM 2
 #define	DMA_PROXY_DEV_TO_DEV 3
 #define	DMA_PROXY_TRANS_NONE 4
-struct sg_info {
+struct dma_buf_info {
 	unsigned long size;
 	uint32_t numsg;
 	u32 direction;

@@ -1,0 +1,577 @@
+root@xilinx-zcu216-2021_2:~# ./fmcw_app
+ADDR_CMAC_REG: 0xA0180000
+ADDR_DMA_CMAC: 0xA0080000
+ADDR_DMA_ADC: 0xA0090000
+ADDR_DMA_FFT: 0xA00A0000
+PHYS_ADC_BUF: 0x7C000000
+PHYS_FFT_DESC: 0x7E000000
+PHYS_FFT_BUF: 0x7E001000
+[HAL] Successfully mapped physical address 0xA0000000 -> virtual memory.
+ hal_init ok
+IP Bo mach: 192.168.1.5
+IP PC: 192.168.1.10
+Radar Data innit ok
+Innit_Radar_Debug ok
+Uart1 ok (/dev/ttyUL2)
+Uart2 ok (/dev/ttyUL3)
+Uart3 ok (/dev/ttyUL4)
+All SPI devices initialized successfully.
+[HAL] XGpioPs_CfgInitialize (gpiod) - OK.
+XGpioPs_Setup devices
+psgpio ok
+[HAL INFO] Chip 'gpiochip2' (Kênh 1) INPUT  2 pin.
+GPIO_ENDFRAME_IRQ ok
+[HAL INFO] Chip 'gpiochip4' (Kênh 1) OUTPUT  10 pin.
+[HAL INFO] Chip 'gpiochip4' (Kênh 2) OUTPUT  32 pin.
+GPIO_HS1 ok
+[HAL INFO] Chip 'gpiochip5' (Kênh 1) OUTPUT  9 pin.
+[HAL INFO] Chip 'gpiochip5' (Kênh 2) INPUT  32 pin.
+GPIO_HS2 ok
+[HAL INFO] Chip 'gpiochip6' (Kênh 1) OUTPUT  3 pin.
+[HAL INFO] Chip 'gpiochip6' (Kênh 2) INPUT  12 pin.
+GPIO_HS3 ok
+[CAN] Initializing all CAN buses...
+[CAN] Interface can0 initialized successfully.
+[CAN] Interface can1 initialized successfully.
+System_Set_RF_ENABLE
+Radar_Update_Uart_DKSG
+System_Set_Phase_Start_Read
+Radar_Innit_Phase
+Radar_Update_Uart_DKSG
+PC8_Control_HW
+System_Set_Beta_Epxilon_sel
+System_Set_BS_Start
+System_Set_Beam17_RAM
+ADF4159_Innit
+ADF4159_Innit done
+ADF4360_Innit done
+
+###############################################
+Hello RFSoC World!
+
+RFDC IP Version: 2.6
+
+Configuring LMK and LMX devices for RFSOC-SOM
+Done with settings of LMK04832
+Done with settings of LMX2820 PLL1
+Done with settings of LMX2820 PLL2
+Done with settings of LMK/X clocks
+
+The design is ready to use.
+Open XSCT or the terminal to run commands.
+###############################################
+
+--------------- Entering main() ---------------
+=== Metal log enabled ===
+metal: debug:     added page size 4096 @/tmp
+metal: debug:     registered platform bus
+metal: debug:     registered pci bus
+metal: info:      metal_linux_dev_open: checking driver vfio-platform,a0200000.usp_rf_data_converter,(null)
+metal: debug:     bound device a0200000.usp_rf_data_converter to driver uio_pdrv_genirq
+metal: debug:     opened platform:a0200000.usp_rf_data_converter as /dev/uio4
+metal: debug:     metal_uio_read_map_attr():79 offset = 0
+metal: debug:     metal_uio_read_map_attr():79 addr = 0xa0200000
+metal: debug:     metal_uio_read_map_attr():79 size = 0x40000
+metal: info:      metal_linux_dev_open: checking driver vfio-platform,a0200000.usp_rf_data_converter,(null)
+metal: debug:     bound device a0200000.usp_rf_data_converter to driver uio_pdrv_genirq
+metal: debug:     opened platform:a0200000.usp_rf_data_converter as /dev/uio4
+metal: debug:     metal_uio_read_map_attr():79 offset = 0
+metal: debug:     metal_uio_read_map_attr():79 addr = 0xa0200000
+metal: debug:     metal_uio_read_map_attr():79 size = 0x40000
+
+DeviceID: 0
+Silicon Revision: 1
+metal: info:      metal_linux_dev_open: checking driver vfio-platform,a0200000.usp_rf_data_converter,(null)
+metal: debug:     bound device a0200000.usp_rf_data_converter to driver uio_pdrv_genirq
+metal: debug:     opened platform:a0200000.usp_rf_data_converter as /dev/uio4
+metal: debug:     metal_uio_read_map_attr():79 offset = 0
+metal: debug:     metal_uio_read_map_attr():79 addr = 0xa0200000
+metal: debug:     metal_uio_read_map_attr():79 size = 0x40000
+
+###############################################
+Data Converter startup up in progress...
+RF Data Converters Powered up.
+
+The Power-on sequence step. 0xF is complete.
+   DAC Tile0 Power-on Sequence Step: 0x0000000f
+   DAC Tile1 Power-on Sequence Step: 0x0000000f
+   DAC Tile2 Power-on Sequence Step: 0x0000000f
+   DAC Tile3 Power-on Sequence Step: 0x0000000f
+   ADC Tile0 Power-on Sequence Step: 0x0000000f
+   ADC Tile1 Power-on Sequence Step: 0x0000000f
+   ADC Tile2 Power-on Sequence Step: 0x0000000f
+   ADC Tile3 Power-on Sequence Step: 0x0000000f
+
+Data Converter power up is complete!
+###############################################
+
+###############################################
+=== Data Converter Status Report ===
+DAC Status
+   Tile: 0 ready
+   Tile: 1 ready
+   Tile: 2 ready
+   Tile: 3 ready
+ADC Status
+   Tile: 0 ready
+   Tile: 1 ready
+   Tile: 2 ready
+   Tile: 3 ready
+###############################################
+
+DAC[0,0]= 29968 uA
+DAC[0,1]= 29968 uA
+DAC[0,2]= 29968 uA
+DAC[0,3]= 29968 uA
+DAC[1,0]= 29968 uA
+DAC[1,1]= 29968 uA
+DAC[1,2]= 29968 uA
+DAC[1,3]= 29968 uA
+DAC[2,0]= 29968 uA
+DAC[2,1]= 29968 uA
+DAC[2,2]= 29968 uA
+DAC[2,3]= 29968 uA
+DAC[3,0]= 29968 uA
+DAC[3,1]= 29968 uA
+DAC[3,2]= 29968 uA
+DAC[3,3]= 29968 uA
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile0 ch0 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile0 ch1 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+ADC Tile0 ch2 is not available.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+ADC Tile0 ch3 is not available.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile1 ch0 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile1 ch1 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile1 ch2 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile1 ch3 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile2 ch0 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile2 ch1 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+ADC Tile2 ch2 is not available.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+ADC Tile2 ch3 is not available.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile3 ch0 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile3 ch1 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile3 ch2 DSA set to 0.0 dB.
+###############################################
+Set Attenuation in dB to :  0.0
+###############################################
+   ADC Tile3 ch3 DSA set to 0.0 dB.
+###############################################
+
+###############################################
+=== ADC DSA Report ===
+   ADC Tile0 ch0 DSA set to 0.0 dB.
+   ADC Tile0 ch1 DSA set to 0.0 dB.
+   ADC Tile1 ch0 DSA set to 0.0 dB.
+   ADC Tile1 ch1 DSA set to 0.0 dB.
+   ADC Tile1 ch2 DSA set to 0.0 dB.
+   ADC Tile1 ch3 DSA set to 0.0 dB.
+   ADC Tile2 ch0 DSA set to 0.0 dB.
+   ADC Tile2 ch1 DSA set to 0.0 dB.
+   ADC Tile3 ch0 DSA set to 0.0 dB.
+   ADC Tile3 ch1 DSA set to 0.0 dB.
+   ADC Tile3 ch2 DSA set to 0.0 dB.
+   ADC Tile3 ch3 DSA set to 0.0 dB.
+###############################################
+
+###############################################
+=== Data Current Report ===
+   DAC Tile0 Ch0 output current mode is set to RFSoC Gen3.
+   DAC Tile0 Ch0 output current is set to 29968 uA.
+   DAC Tile0 Ch1 output current mode is set to RFSoC Gen3.
+   DAC Tile0 Ch1 output current is set to 29968 uA.
+   DAC Tile0 Ch2 output current mode is set to RFSoC Gen3.
+   DAC Tile0 Ch2 output current is set to 29968 uA.
+   DAC Tile0 Ch3 output current mode is set to RFSoC Gen3.
+   DAC Tile0 Ch3 output current is set to 29968 uA.
+   DAC Tile1 Ch0 output current mode is set to RFSoC Gen3.
+   DAC Tile1 Ch0 output current is set to 29968 uA.
+   DAC Tile1 Ch1 output current mode is set to RFSoC Gen3.
+   DAC Tile1 Ch1 output current is set to 29968 uA.
+   DAC Tile1 Ch2 output current mode is set to RFSoC Gen3.
+   DAC Tile1 Ch2 output current is set to 29968 uA.
+   DAC Tile1 Ch3 output current mode is set to RFSoC Gen3.
+   DAC Tile1 Ch3 output current is set to 29968 uA.
+###############################################
+
+Manhtx implement new automation process
+
+###############################################
+Enabling DAC Multi-Tile Synchronization...
+
+DAC_Sync_Config2.Tiles: 0xffffffff
+
+=== Multi-Tile Synchronization Metal Log Report ===
+metal: info:      DTC Scan PLL
+metal: debug:     Target 64, DTC Code 5, Diff 59, Min 59
+metal: debug:     Target 64, DTC Code 23, Diff 41, Min 41
+metal: debug:     Target 64, DTC Code 43, Diff 21, Min 21
+metal: debug:     Target 64, DTC Code 63, Diff 1, Min 1
+metal: debug:     Target 64, DTC Code 82, Diff 18, Min 1
+metal: debug:     Target 64, DTC Code 102, Diff 38, Min 1
+metal: debug:     Target 64, DTC Code 121, Diff 57, Min 1
+metal: debug:     RefTile (0): DTC Code Target 64, Picked 63
+metal: info:      DAC0: 000000000001132220000000000000111322200000000000000113222000000*#000001132222000000000000111322200000000000001111222000000000000
+metal: debug:     Tile (1): Max/Min 63/63, Range 0
+metal: debug:     Tile (1): Code 7, New-Range: 56, Min-Range: 56
+metal: debug:     Tile (1): Code 27, New-Range: 36, Min-Range: 36
+metal: debug:     Tile (1): Code 46, New-Range: 17, Min-Range: 17
+metal: debug:     Tile (1): Code 66, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (1): Code 86, New-Range: 23, Min-Range: 3
+metal: debug:     Tile (1): Code 106, New-Range: 43, Min-Range: 3
+metal: debug:     Tile (1): Code 123, New-Range: 60, Min-Range: 3
+metal: debug:     Tile (1): Code 66, Range Prev 0, New 3
+metal: info:      DAC1: 200000000000000113222000000000000011122200000000000000111222000#00*0000000111222000000000000011322220000000000000111322200000000
+metal: debug:     Tile (2): Max/Min 66/63, Range 3
+metal: debug:     Tile (2): Code 7, New-Range: 59, Min-Range: 59
+metal: debug:     Tile (2): Code 26, New-Range: 40, Min-Range: 40
+metal: debug:     Tile (2): Code 47, New-Range: 19, Min-Range: 19
+metal: debug:     Tile (2): Code 66, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (2): Code 85, New-Range: 22, Min-Range: 3
+metal: debug:     Tile (2): Code 105, New-Range: 42, Min-Range: 3
+metal: debug:     Tile (2): Code 123, New-Range: 60, Min-Range: 3
+metal: debug:     Tile (2): Code 66, Range Prev 3, New 3
+metal: info:      DAC2: 200000000000001112220000000000000011122220000000000000111222200#00*0000001112222000000000000111222200000000000000113222000000000
+metal: debug:     Tile (3): Max/Min 66/63, Range 3
+metal: debug:     Tile (3): Code 7, New-Range: 59, Min-Range: 59
+metal: debug:     Tile (3): Code 26, New-Range: 40, Min-Range: 40
+metal: debug:     Tile (3): Code 46, New-Range: 20, Min-Range: 20
+metal: debug:     Tile (3): Code 66, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (3): Code 85, New-Range: 22, Min-Range: 3
+metal: debug:     Tile (3): Code 104, New-Range: 41, Min-Range: 3
+metal: debug:     Tile (3): Code 122, New-Range: 59, Min-Range: 3
+metal: debug:     Tile (3): Code 66, Range Prev 3, New 3
+metal: info:      DAC3: 200000000000001112220000000000000111322200000000000001113222000#00*0000001132220000000000000113222000000000000001112220000000000
+metal: info:      DTC Scan T1
+metal: debug:     Target 64, DTC Code 34, Diff 30, Min 30
+metal: debug:     Target 64, DTC Code 101, Diff 37, Min 30
+metal: debug:     RefTile (0): DTC Code Target 64, Picked 34
+metal: info:      DAC0: 0000000000000000000000000000000000*00000000000000000000000000000#000001132220000000000000000000000000000000000000000000000000000
+metal: debug:     Tile (1): Max/Min 34/34, Range 0
+metal: debug:     Tile (1): Code 37, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (1): Code 103, New-Range: 69, Min-Range: 3
+metal: debug:     Tile (1): Code 37, Range Prev 0, New 3
+metal: info:      DAC1: 2200000000000000000000000000000000#00*000000000000000000000000000000000000113222000000000000000000000000000000000000000000000000
+metal: debug:     Tile (2): Max/Min 37/34, Range 3
+metal: debug:     Tile (2): Code 37, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (2): Code 103, New-Range: 69, Min-Range: 3
+metal: debug:     Tile (2): Code 37, Range Prev 3, New 3
+metal: info:      DAC2: 2200000000000000000000000000000000#00*000000000000000000000000000000000000113222000000000000000000000000000000000000000000000000
+metal: debug:     Tile (3): Max/Min 37/34, Range 3
+metal: debug:     Tile (3): Code 38, New-Range: 4, Min-Range: 4
+metal: debug:     Tile (3): Code 104, New-Range: 70, Min-Range: 4
+metal: debug:     Tile (3): Code 38, Range Prev 3, New 4
+metal: info:      DAC3: 2220000000000000000000000000000000#000*00000000000000000000000000000000000011222200000000000000000000000000000000000000000000000
+metal: debug:     Marker Read Tile 0, FIFO 0 - 00006000 = 0000: count=17, loc=0, done=1
+metal: info:      DAC0: Marker: - 17, 0
+metal: debug:     Marker Read Tile 0, FIFO 1 - 00006400 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 0, FIFO 2 - 00006800 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 0, FIFO 3 - 00006C00 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 0 - 0000A000 = 0000: count=17, loc=0, done=1
+metal: info:      DAC1: Marker: - 17, 0
+metal: debug:     Marker Read Tile 1, FIFO 0 - 0000A000 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 1 - 0000A400 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 2 - 0000A800 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 2, FIFO 0 - 0000E000 = 0000: count=17, loc=0, done=1
+metal: info:      DAC2: Marker: - 17, 0
+metal: debug:     Marker Read Tile 2, FIFO 0 - 0000E000 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 2, FIFO 1 - 0000E400 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 3, FIFO 0 - 00012000 = 0000: count=17, loc=0, done=1
+metal: info:      DAC3: Marker: - 17, 0
+metal: debug:     Marker Read Tile 3, FIFO 0 - 00012000 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 3, FIFO 2 - 00012800 = 0000: count=17, loc=0, done=1
+metal: debug:     Marker Read Tile 3, FIFO 3 - 00012C00 = 0000: count=17, loc=0, done=1
+metal: debug:     Count_W 24, loc_W 12
+metal: info:      SysRef period in terms of DAC T1s = 480
+metal: info:      DAC target latency = 408
+metal: debug:     Tile 0, latency 408, max 408
+metal: debug:     Tile 1, latency 408, max 408
+metal: debug:     Tile 2, latency 408, max 408
+metal: debug:     Tile 3, latency 408, max 408
+metal: debug:     Target 408, Tile 0, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 408, Tile 1, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 408, Tile 2, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 408, Tile 3, delta 0, i/f_part 0/0, offset 0
+
+========== DAC Multi-Tile Sync Report ==========
+DAC0: Latency(T1) = 408, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS DAC Tile0 PLL Report ===
+    DAC0: PLL DTC Code =63
+    DAC0: PLL Num Windows =7
+    DAC0: PLL Max Gap =14
+    DAC0: PLL Min Gap =11
+    DAC0: PLL Max Overlap =1
+=== MTS DAC Tile0 T1 Report ===
+    DAC0: T1 DTC Code =34
+    DAC0: T1 Num Windows =2
+    DAC0: T1 Max Gap =70
+    DAC0: T1 Min Gap =52
+    DAC0: T1 Max Overlap =1
+
+DAC1: Latency(T1) = 408, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS DAC Tile1 PLL Report ===
+    DAC1: PLL DTC Code =66
+    DAC1: PLL Num Windows =7
+    DAC1: PLL Max Gap =14
+    DAC1: PLL Min Gap =8
+    DAC1: PLL Max Overlap =1
+=== MTS DAC Tile1 T1 Report ===
+    DAC1: T1 DTC Code =37
+    DAC1: T1 Num Windows =2
+    DAC1: T1 Max Gap =72
+    DAC1: T1 Min Gap =48
+    DAC1: T1 Max Overlap =1
+
+DAC2: Latency(T1) = 408, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS DAC Tile2 PLL Report ===
+    DAC2: PLL DTC Code =66
+    DAC2: PLL Num Windows =7
+    DAC2: PLL Max Gap =14
+    DAC2: PLL Min Gap =9
+    DAC2: PLL Max Overlap =1
+=== MTS DAC Tile2 T1 Report ===
+    DAC2: T1 DTC Code =37
+    DAC2: T1 Num Windows =2
+    DAC2: T1 Max Gap =72
+    DAC2: T1 Min Gap =48
+    DAC2: T1 Max Overlap =1
+
+DAC3: Latency(T1) = 408, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS DAC Tile3 PLL Report ===
+    DAC3: PLL DTC Code =66
+    DAC3: PLL Num Windows =7
+    DAC3: PLL Max Gap =14
+    DAC3: PLL Min Gap =10
+    DAC3: PLL Max Overlap =1
+=== MTS DAC Tile3 T1 Report ===
+    DAC3: T1 DTC Code =38
+    DAC3: T1 Num Windows =2
+    DAC3: T1 Max Gap =72
+    DAC3: T1 Min Gap =47
+    DAC3: T1 Max Overlap =0
+
+DAC Multi-Tile Synchronization is complete.
+###############################################
+
+###############################################
+Enabling ADC Multi-Tile Synchronization...
+
+ADC_Sync_Config2.Tiles: 0xffffffff
+
+=== Multi-Tile Synchronization Metal Log Report ===
+metal: info:      DTC Scan PLL
+metal: debug:     Target 64, DTC Code 16, Diff 48, Min 48
+metal: debug:     Target 64, DTC Code 34, Diff 30, Min 30
+metal: debug:     Target 64, DTC Code 55, Diff 9, Min 9
+metal: debug:     Target 64, DTC Code 73, Diff 9, Min 9
+metal: debug:     Target 64, DTC Code 92, Diff 28, Min 9
+metal: debug:     Target 64, DTC Code 112, Diff 48, Min 9
+metal: debug:     RefTile (0): DTC Code Target 64, Picked 55
+metal: info:      ADC0: 0000113222000000000000011322000000000000001112222000000*00000011#220000000000000111322200000000000011132220000000000000113222000
+metal: debug:     Tile (1): Max/Min 55/55, Range 0
+metal: debug:     Tile (1): Code 2, New-Range: 53, Min-Range: 53
+metal: debug:     Tile (1): Code 18, New-Range: 37, Min-Range: 37
+metal: debug:     Tile (1): Code 37, New-Range: 18, Min-Range: 18
+metal: debug:     Tile (1): Code 57, New-Range: 2, Min-Range: 2
+metal: debug:     Tile (1): Code 77, New-Range: 22, Min-Range: 2
+metal: debug:     Tile (1): Code 95, New-Range: 40, Min-Range: 2
+metal: debug:     Tile (1): Code 115, New-Range: 60, Min-Range: 2
+metal: debug:     Tile (1): Code 57, Range Prev 0, New 2
+metal: info:      ADC1: 0000001112220000000000000111322000000000000001113220000#0*0000000113222000000000000011322000000000000001132220000000000000111222
+metal: debug:     Tile (2): Max/Min 57/55, Range 2
+metal: debug:     Tile (2): Code 3, New-Range: 54, Min-Range: 54
+metal: debug:     Tile (2): Code 19, New-Range: 38, Min-Range: 38
+metal: debug:     Tile (2): Code 38, New-Range: 19, Min-Range: 19
+metal: debug:     Tile (2): Code 58, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (2): Code 77, New-Range: 22, Min-Range: 3
+metal: debug:     Tile (2): Code 96, New-Range: 41, Min-Range: 3
+metal: debug:     Tile (2): Code 117, New-Range: 62, Min-Range: 3
+metal: debug:     Tile (2): Code 58, Range Prev 2, New 3
+metal: info:      ADC2: 0000000113322000000000000011122200000000000001113222000#00*000000011322000000000000011122200000000000000111222200000000000001112
+metal: debug:     Tile (3): Max/Min 58/55, Range 3
+metal: debug:     Tile (3): Code 3, New-Range: 55, Min-Range: 55
+metal: debug:     Tile (3): Code 19, New-Range: 39, Min-Range: 39
+metal: debug:     Tile (3): Code 38, New-Range: 20, Min-Range: 20
+metal: debug:     Tile (3): Code 58, New-Range: 3, Min-Range: 3
+metal: debug:     Tile (3): Code 76, New-Range: 21, Min-Range: 3
+metal: debug:     Tile (3): Code 95, New-Range: 40, Min-Range: 3
+metal: debug:     Tile (3): Code 115, New-Range: 60, Min-Range: 3
+metal: debug:     Tile (3): Code 58, Range Prev 3, New 3
+metal: info:      ADC3: 0000000113222000000000000011322200000000000000113222000#00*000000113222000000000000111322000000000000001113220000000000000011322
+metal: info:      DTC Scan T1
+metal: debug:     Target 64, DTC Code 30, Diff 34, Min 34
+metal: debug:     Target 64, DTC Code 97, Diff 33, Min 33
+metal: debug:     RefTile (0): DTC Code Target 64, Picked 97
+metal: info:      ADC0: 0000000000000000000000000000000000000000000000000000000000000113#22000000000000000000000000000000*000000000000000000000000000000
+metal: debug:     Tile (1): Max/Min 97/97, Range 0
+metal: debug:     Tile (1): Code 32, New-Range: 65, Min-Range: 65
+metal: debug:     Tile (1): Code 99, New-Range: 2, Min-Range: 2
+metal: debug:     Tile (1): Code 99, Range Prev 0, New 2
+metal: info:      ADC1: 0000000000000000000000000000000000000000000000000000000000000000011322200000000000000000000000000#0*0000000000000000000000000000
+metal: debug:     Tile (2): Max/Min 99/97, Range 2
+metal: debug:     Tile (2): Code 32, New-Range: 67, Min-Range: 67
+metal: debug:     Tile (2): Code 99, New-Range: 2, Min-Range: 2
+metal: debug:     Tile (2): Code 99, Range Prev 2, New 2
+metal: info:      ADC2: 0000000000000000000000000000000000000000000000000000000000000000011322200000000000000000000000000#0*0000000000000000000000000000
+metal: debug:     Tile (3): Max/Min 99/97, Range 2
+metal: debug:     Tile (3): Code 32, New-Range: 67, Min-Range: 67
+metal: debug:     Tile (3): Code 99, New-Range: 2, Min-Range: 2
+metal: debug:     Tile (3): Code 99, Range Prev 2, New 2
+metal: info:      ADC3: 0000000000000000000000000000000000000000000000000000000000000000011322200000000000000000000000000#0*0000000000000000000000000000
+metal: debug:     Marker Read Tile 0, FIFO 0 - 00014000 = 10000A: count=10, loc=0, done=1
+metal: info:      ADC0: Marker: - 10, 0
+metal: debug:     Marker Read Tile 0, FIFO 0 - 00014000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 0, FIFO 2 - 00014000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 0 - 00018000 = 10000A: count=10, loc=0, done=1
+metal: info:      ADC1: Marker: - 10, 0
+metal: debug:     Marker Read Tile 1, FIFO 0 - 00018000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 1 - 00018000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 2 - 00018000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 1, FIFO 3 - 00018000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 2, FIFO 0 - 0001C000 = 10000A: count=10, loc=0, done=1
+metal: info:      ADC2: Marker: - 10, 0
+metal: debug:     Marker Read Tile 2, FIFO 1 - 0001C000 = 10000A: count=10, loc=0, done=1
+metal: debug:     Marker Read Tile 3, FIFO 0 - 00020000 = 10000A: count=10, loc=0, done=1
+metal: info:      ADC3: Marker: - 10, 0
+metal: debug:     Count_W 24, loc_W 12
+metal: info:      SysRef period in terms of ADC T1s = 960
+metal: info:      ADC target latency = 240
+metal: debug:     Tile 0, latency 240, max 240
+metal: debug:     Tile 1, latency 240, max 240
+metal: debug:     Tile 2, latency 240, max 240
+metal: debug:     Tile 3, latency 240, max 240
+metal: debug:     Target 240, Tile 0, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 240, Tile 1, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 240, Tile 2, delta 0, i/f_part 0/0, offset 0
+metal: debug:     Target 240, Tile 3, delta 0, i/f_part 0/0, offset 0
+
+========== ADC Multi-Tile Sync Report ==========
+ADC0: Latency(T1) = 240, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS ADC Tile0 PLL Report ===
+    ADC0: PLL DTC Code =55
+    ADC0: PLL Num Windows =6
+    ADC0: PLL Max Gap =14
+    ADC0: PLL Min Gap =12
+    ADC0: PLL Max Overlap =1
+=== MTS ADC Tile0 T1 Report ===
+    ADC0: T1 DTC Code =97
+    ADC0: T1 Num Windows =2
+    ADC0: T1 Max Gap =61
+    ADC0: T1 Min Gap =61
+    ADC0: T1 Max Overlap =1
+
+ADC1: Latency(T1) = 240, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS ADC Tile1 PLL Report ===
+    ADC1: PLL DTC Code =57
+    ADC1: PLL Num Windows =7
+    ADC1: PLL Max Gap =14
+    ADC1: PLL Min Gap =6
+    ADC1: PLL Max Overlap =1
+=== MTS ADC Tile1 T1 Report ===
+    ADC1: T1 DTC Code =99
+    ADC1: T1 Num Windows =2
+    ADC1: T1 Max Gap =65
+    ADC1: T1 Min Gap =57
+    ADC1: T1 Max Overlap =1
+
+ADC2: Latency(T1) = 240, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS ADC Tile2 PLL Report ===
+    ADC2: PLL DTC Code =58
+    ADC2: PLL Num Windows =7
+    ADC2: PLL Max Gap =14
+    ADC2: PLL Min Gap =7
+    ADC2: PLL Max Overlap =2
+=== MTS ADC Tile2 T1 Report ===
+    ADC2: T1 DTC Code =99
+    ADC2: T1 Num Windows =2
+    ADC2: T1 Max Gap =65
+    ADC2: T1 Min Gap =57
+    ADC2: T1 Max Overlap =1
+
+ADC3: Latency(T1) = 240, Adjusted Delay Offset(T12) =   0, Marker Delay = 15
+=== MTS ADC Tile3 PLL Report ===
+    ADC3: PLL DTC Code =58
+    ADC3: PLL Num Windows =7
+    ADC3: PLL Max Gap =14
+    ADC3: PLL Min Gap =7
+    ADC3: PLL Max Overlap =1
+=== MTS ADC Tile3 T1 Report ===
+    ADC3: T1 DTC Code =99
+    ADC3: T1 Num Windows =2
+    ADC3: T1 Max Gap =65
+    ADC3: T1 Min Gap =57
+    ADC3: T1 Max Overlap =1
+
+ADC Multi-Tile Synchronization is complete.
+###############################################
+May chu UDP da khoi dong @ port 105
+dang cho su kien tren gpiochip3 line 0 (GIC 124)...
+pthread_create(&can_thread_id, NULL, can_receiver_thread, NULL) => done
+[CAN Thread] Bat đau lang nghe...
+pthread_create(&FFT_tid, NULL, XGpio_Interrupt_IRQ, NULL) => done
+pthread_create(&thread_adc, NULL, ADC_Worker_Thread, NULL) => done
+pthread_create(&thread_fft, NULL, FFT_Monitor_SG_S2MM_Thread, NULL) => done
+[FFT] Initializing virtual pointers and setting up DMA...
+[FFT] DMA SG S2MM setup complete. Start monitoring.
+[ADC] Thread started for 4MB packets.
+[CAN] Error writing to socket: Network is down
+[CAN] Error writing to socket: Network is down
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] SUCCESS! Data[0..3]: 0xFBA20219 0x0004FFF9 0xFFF90000 0xFFF20012
+[CAN] Error writing to socket: Network is down
+[CAN] Error writing to socket: Network is down
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] Timeout! SR: 0x0, Recv: 4194304/4194304
+[ADC] Error! Bytes received before TLAST: 4194304
+[ADC] SUCCESS! Data[0..3]: 0xFB9A020A 0xFFFDFFFD 0xFFFC0010 0xFFF4000D
+[ADC] SUCCESS! Data[0..3]: 0xFBA3020C 0x0002FFFE 0x00040001 0xFFF70014
