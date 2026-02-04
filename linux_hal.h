@@ -4,9 +4,9 @@
 // #include "CMAC_Hal.h" // thư viện CMA
 #include "DMA_Data.h" // thư viện DMA
 #include "DMA_Hal.h"  // thư viện DMA
-#include "HAL_cache.h"
+#include "Hal_cache.h"
 #include "SPI_Hal.h"     // thư viện SPI
-#include "XGpioPS_hal.h" // thư viện GPIO
+#include "XGpioPS_Hal.h" // thư viện GPIO
 #include "XUartPS_Hal.h" // thư viện XUartPS
 #include "XUart_Hal.h"   // thư viện Uart
 #include "xgpio_hal.h"   // thư viện XGPIO

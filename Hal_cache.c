@@ -1,4 +1,4 @@
-#include "HAL_cache.h"
+#include "Hal_cache.h"
 
 /**
  * @brief Vô hiệu hóa D-Cache cho một vùng nhớ ảo cụ thể.

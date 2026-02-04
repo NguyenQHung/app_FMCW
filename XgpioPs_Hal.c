@@ -1,4 +1,4 @@
-#include "XGpioPS_hal.h"
+#include "XGpioPS_Hal.h"
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
